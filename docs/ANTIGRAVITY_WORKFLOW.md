@@ -1,40 +1,48 @@
-# Antigravity contributor workflow (feature branch + PR)
+# Antigravity workflow — Amazing Player
 
-Prerequisite: Mark imports the actual starter, records stable API in INTEGRATION_CONTRACT.md, and assigns a scoped issue. Do not invent the missing core player from PDF snippets.
+**Current baseline:** `main` has the professor-sample-derived, CI-compiled C# WinForms/VLC application (PR #8 merged). Do not create a new project or request an unavailable original ZIP. Read `docs/INTEGRATION_CONTRACT.md` for exact existing methods and unimplemented features.
 
-1. Open the repository in Antigravity, fetch main and create a new feature branch (e.g. `feat/darrel-library`, `feat/chris-playback-modes`, `feat/shanen-ui`, `feat/mitchel-favorites`).
-2. Read AGENTS.md, docs/PRD.md, docs/PHASE_PLAN.md and your issue; inspect the existing code and only edit paths your issue permits.
-3. Ask the AI to propose a *small* change and its validation. Review diff yourself and run relevant tests where possible. For untestable Windows UI, record NOT RUN and request Mark's Windows check.
-4. Save substantive changes and create commits using your own Git identity. Push your feature branch and open a PR targeting main. Tell Mark the PR URL.
-5. Mark reviews diff, checks real build/integration, requests fixes if needed and merges. Refresh your branch from updated main before new work.
+**Before sharing media or team photos:** the GitHub repository must be **private**, as required by the instructor. GitHub currently reports it public; only the owner can change visibility.
 
-## Copy-paste prompt for assigned task
+## Individual branches already created
+| Member | Existing branch | Issue |
+|---|---|---|
+| Darrel Cango | `feat/darrel-library` | [#3](https://github.com/NeatKnight18586/amazing-oop10-media-player/issues/3) |
+| Chris Garcia | `feat/chris-playback-modes` | [#4](https://github.com/NeatKnight18586/amazing-oop10-media-player/issues/4) |
+| Shanen Mirador | `feat/shanen-ui` | [#5](https://github.com/NeatKnight18586/amazing-oop10-media-player/issues/5) |
+| Mitchel Susi | `feat/mitchel-favorites` | [#6](https://github.com/NeatKnight18586/amazing-oop10-media-player/issues/6) |
+
+## Plain-language steps for each teammate
+
+1. Accept Mark's GitHub invitation using **your own account**. Open or clone the repository in Antigravity. Choose **your existing branch** from the table; do not work directly on `main`.
+2. Read `AGENTS.md`, `docs/PRD.md`, `docs/INTEGRATION_CONTRACT.md`, your GitHub issue, and `docs/TEAM_HANDOFF.md`. Give the assistant only your assigned issue and branch.
+3. Ask the AI to inspect the existing code *first* and propose a small file-limited change. Review each diff carefully; test it if possible. If a method is missing from a file owned by someone else, ask Mark for an integration hook.
+4. Commit **meaningful steps of real work** under your Git identity with messages such as `feat:`, `test:`, `fix:`, `docs:`, `refactor:`. No empty or artificially split commits and no commits under someone else's name.
+5. Push your branch and open a GitHub **pull request into main**. Include FR requirements, files changed, tests run (or NOT RUN) and any integration request. Do not merge it yourself unless Mark approves.
+6. Mark reviews the PR, performs Windows integration/tests and merges when safe. Sync your branch from the latest `main` before further changes.
+
+## General copy-paste prompt
+
 ```text
-You are working on the Amazing Player C# WinForms project.
-Read AGENTS.md, docs/PRD.md, docs/PHASE_PLAN.md,
-docs/WORKSTREAM_ASSIGNMENTS.md and docs/INTEGRATION_CONTRACT.md.
-My assigned GitHub issue is: [ISSUE URL].
-My branch is: [FEATURE BRANCH].
-Work only in files explicitly owned by this issue.
-Before editing: inspect actual existing source, enumerate exact files,
-dependencies, requirements and acceptance tests. Propose the smallest
-change that fulfills this issue without breaking the instructor starter.
-If APIs are absent or conflict, stop and write a brief integration
-request for Mark. Never invent the VLC base player or modify someone
-else's files. Implement, explain the result in simple terms, run tests
-that the environment supports, and truthfully report NOT RUN items.
-Show the diff before I commit. I will review and push my own work.
+You are assisting my assigned Amazing Player (OOP10) workstream.
+Repository: https://github.com/NeatKnight18586/amazing-oop10-media-player
+My issue: [paste assigned issue URL].
+My branch: [paste my existing feat/... branch].
+
+Read AGENTS.md, docs/PRD.md, docs/INTEGRATION_CONTRACT.md,
+docs/PHASE_PLAN.md, and my issue before proposing changes.
+Use the actual checked-in C# WinForms code; do not regenerate a
+new application or replace the tested LibVLC player.
+
+Tell me which files you will touch, the acceptance checks and the
+smallest implementation step. Work only in my file ownership area.
+If a change needs Form1.cs, BasePlayerForm.cs, Program.cs or .csproj
+outside my ownership, prepare an integration request for Mark instead.
+
+After each meaningful step: explain in simple language what changed,
+show the diff, run the tests that are possible, and report any tests
+that could not be run. Let me review and commit my own real work.
+Do not fabricate test results, commits, screenshots or PR approvals.
 ```
 
-## Mark's Codex review prompt
-```text
-Review this Amazing Player PR [URL]. Read AGENTS.md, the PRD, phase
-plan, integration contract and actual instructor starter. Check
-requirements, allowed file paths, OOP correctness, WinForms designer
-safety, playback event threading, error handling and tests.
-Do not refactor unrelated files. Identify integration hooks needed in
-my owned files. Report which tests actually ran and which did not.
-Recommend merge only if changes are scoped and safe.
-```
-
-Each member should have substantive reviewable progress throughout the assignment. No sham commits, fake test reports, or shared impersonated authorship.
+For role-specific instructions see `docs/TEAM_HANDOFF.md`.
