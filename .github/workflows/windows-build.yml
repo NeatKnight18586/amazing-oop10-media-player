@@ -1,4 +1,4 @@
-name: Windows .NET build (bootstrap)
+name: Windows build and standalone test package
 
 on:
   push:
@@ -22,3 +22,17 @@ jobs:
         run: dotnet restore app/MediaPlayerPrj/MediaPlayerPrj.csproj
       - name: Build
         run: dotnet build app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --no-restore
+      - name: Publish self-contained win-x64
+        run: dotnet publish app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --runtime win-x64 --self-contained true --output publish/AmazingPlayer -p:PublishSingleFile=false -p:PublishTrimmed=false
+      - name: Verify publish content
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "publish/AmazingPlayer/MediaPlayerPrj.exe")) { throw "MediaPlayerPrj.exe missing" }
+          Get-ChildItem "publish/AmazingPlayer" | Select-Object Name
+      - name: Upload standalone test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: AmazingPlayer-bootstrap-win-x64-self-contained
+          path: publish/AmazingPlayer/
+          if-no-files-found: error
+          retention-days: 7
