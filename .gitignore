@@ -1,0 +1,17 @@
+# Visual Studio / .NET build products
+**/bin/
+**/obj/
+**/.vs/
+**/publish/
+*.user
+*.suo
+TestResults/
+*.tmp
+# Local runtime data
+Library.txt
+Favorites.txt
+# Editor/system
+.DS_Store
+Thumbs.db
+.env
+.env.*
