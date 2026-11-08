@@ -1,19 +1,24 @@
 # Start here — Amazing Player
 
-## Current state (Nov 8, 2026)
-The private repository was created and its documentation foundation established. **It is NOT a runnable C# app yet**. The instructor's complete Visual Studio starter solution has not been supplied.
+## Verified state (Nov 8, 2026)
+- [x] Repository and documentation initialized.
+- [x] Reconstructed starter merged into `main` — PR #8.
+- [x] GitHub Windows CI build and self-contained publish succeeded.
+- [x] Mark reported successful Windows launch, MP3+MP4, playback controls, elapsed time and clean exit. **User-reported smoke test only**, not a recorded formal suite.
+- [ ] Original minimal skin, Favorites, sorting, shuffle/repeat, storage, splash, test evidence, portfolio and final deployment.
+- [ ] Repository must be changed from **public** back to **private** by its owner.
 
-## Immediate steps
-1. Obtain the complete instructor starter project ZIP, containing the actual .sln/.csproj, BasePlayerForm.cs and LibVLC setup; the PDF's Appendix A contains incomplete excerpts.
-2. Put the starter under app/ preserving its original structure. Do not merge partial PDF example files into a different replacement project.
-3. On Windows, open with Visual Studio 2022 or 2026 (.NET desktop development), restore and build before delegating code changes.
-4. Record true namespaces, target framework, package versions, constructor methods and extension hooks in docs/INTEGRATION_CONTRACT.md.
-5. Approve the original PNG skin layout; assign work using docs/WORKSTREAM_ASSIGNMENTS.md; create scoped feature branches from main.
-6. Have teammates use docs/ANTIGRAVITY_WORKFLOW.md and submit PRs. Lead reviews, integrates and validates.
-7. Capture actual test results and bug reports, build Release win-x64, test on a second Windows computer, finish PDF portfolio and presentation.
+## First actions for Mark tonight
+1. In GitHub Settings → General → Danger Zone, switch to **Private**; instructor requires it.
+2. On a Windows PC, download/clone the **main** branch now (not old bootstrap branch). Open `app/MediaPlayerPrj/MediaPlayerPrj.csproj` and use F5. Keep a screenshot of the working app and build output for real documentation.
+3. Invite four teammates when ready and instructor as collaborator. Each collaborator uses their *own* GitHub login.
+4. Distribute issues [#3 (Darrel)](issues/3), [#4 (Chris)](issues/4), [#5 (Shanen)](issues/5), [#6 (Mitchel)](issues/6). Actual full URL for issues: https://github.com/NeatKnight18586/amazing-oop10-media-player/issues
+5. Teammates use AGENTS.md and docs/ANTIGRAVITY_WORKFLOW.md. Start independently on scoped files; do NOT all edit Form1 or BasePlayerForm.
+6. Mark handles the necessary integration hooks in BasePlayerForm/Program/project files. Merge tested/reviewed PRs, not ZIP uploads.
+7. Capture actual bug/test evidence throughout. Second-computer Release test and PDF portfolio are still required.
 
-## Decisions
-BSCS2A / Group 1 / Amazing; Cango, Darrel; Garcia, Chris; Guevarra, Mark; Mirador, Shanen; Susi, Mitchel. Working app title: Amazing Player. FR8 Favorites/Liked Songs; FR12 hand-coded insertion sort by title/artist; original minimal skin PNG in project Assets/; standard WinForms window border.
+## Team
+BSCS2A / Group 1 / Amazing: Darrel Cango (models/storage/sorting), Chris Garcia (playback modes), Mark Guevarra (lead/integration), Shanen Mirador (skin/UI/splash), Mitchel Susi (Favorites/QA).
 
-## Schedule / academic integrity
-M1–M3 Nov 10; M4 Nov 12; M5 Nov 14. Each of five members must make at least 10 **meaningful personal commits**, total at least 50. Contributions must be genuine and explainable, not a scripted counter. Invite instructor as collaborator before submission. Do not claim builds/tests that have not run.
+## Deadlines
+M1–M3 Nov 10; M4 Nov 12; M5 Nov 14. Each of five members needs >=10 meaningful personal commits, not scripted empty commits. Record all real work and explain it in the presentation.
