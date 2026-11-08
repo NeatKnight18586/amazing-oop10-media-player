@@ -1,0 +1,24 @@
+name: Windows .NET build (bootstrap)
+
+on:
+  push:
+    paths:
+      - 'app/**'
+      - '.github/workflows/windows-build.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/windows-build.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore app/MediaPlayerPrj/MediaPlayerPrj.csproj
+      - name: Build
+        run: dotnet build app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --no-restore
