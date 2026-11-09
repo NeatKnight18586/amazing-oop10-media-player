@@ -47,6 +47,10 @@ public sealed class PlaybackOrder
         if (reason == AdvanceReason.UserNext)
             return 0;
 
+        // Repeat All: the playlist finished naturally, so start again from the top.
+        if (Repeat == RepeatMode.All)
+            return 0;
+
         // Repeat Off: the playlist finished naturally, so playback stops.
         return NoNextIndex;
     }
