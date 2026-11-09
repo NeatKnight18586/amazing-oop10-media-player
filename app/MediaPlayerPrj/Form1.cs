@@ -19,6 +19,7 @@ public class Form1 : BasePlayerForm
     private readonly Label _elapsed = new();
     private readonly Label _status = new();
     private readonly Panel _videoHost = new();
+    private readonly SplitContainer _split = new();
     private readonly System.Windows.Forms.Timer _clock = new() { Interval = 500 };
     private readonly HashSet<string> _extensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -29,6 +30,8 @@ public class Form1 : BasePlayerForm
     /// <summary>Builds the temporary playlist/controls surface with no Designer dependency.</summary>
     public Form1()
     {
+        AutoScaleDimensions = new SizeF(96F, 96F);
+        AutoScaleMode = AutoScaleMode.Dpi;
         Text = "Amazing Player — Bootstrap (not final)";
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(1100, 700);
@@ -52,20 +55,17 @@ public class Form1 : BasePlayerForm
         };
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(layout);
 
         var menu = BuildMenu();
         layout.Controls.Add(menu, 0, 0);
         MainMenuStrip = menu;
 
-        var split = new SplitContainer
-        {
-            Dock = DockStyle.Fill,
-            Orientation = Orientation.Vertical,
-            SplitterDistance = 530
-        };
+        _split.Dock = DockStyle.Fill;
+        _split.Orientation = Orientation.Vertical;
+        var split = _split;
         layout.Controls.Add(split, 0, 1);
 
         _playlistView.Dock = DockStyle.Fill;
@@ -90,8 +90,9 @@ public class Form1 : BasePlayerForm
         var controls = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
-            WrapContents = false
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = true
         };
         layout.Controls.Add(controls, 0, 2);
 
@@ -105,7 +106,8 @@ public class Form1 : BasePlayerForm
         var volume = new TrackBar
         {
             Minimum = 0, Maximum = 100, Value = 70,
-            TickFrequency = 20, Width = 125, AutoSize = false, Height = 36
+            TickFrequency = 20, Width = 125, AutoSize = false, Height = 36,
+            Margin = new Padding(Theme.Gutter, 0, Theme.Gutter, 0)
         };
         volume.Scroll += (_, _) => SetVolume(volume.Value);
         controls.Controls.Add(volume);
@@ -113,17 +115,23 @@ public class Form1 : BasePlayerForm
 
         _nowPlaying.AutoSize = false;
         _nowPlaying.Width = 250;
-        _nowPlaying.Height = 30;
+        _nowPlaying.Height = Theme.ControlHeight;
+        _nowPlaying.TextAlign = ContentAlignment.MiddleLeft;
+        _nowPlaying.AutoEllipsis = true;
         _nowPlaying.Text = "Now playing: —";
         controls.Controls.Add(_nowPlaying);
 
         _elapsed.AutoSize = false;
-        _elapsed.Width = 140;
-        _elapsed.Height = 30;
+        _elapsed.Width = 150;
+        _elapsed.Height = Theme.ControlHeight;
+        _elapsed.TextAlign = ContentAlignment.MiddleLeft;
         _elapsed.Text = "00:00:00 / 00:00:00";
         controls.Controls.Add(_elapsed);
 
         _status.Dock = DockStyle.Fill;
+        _status.AutoEllipsis = true;
+        _status.TextAlign = ContentAlignment.MiddleLeft;
+        _status.Padding = new Padding(0, 4, 0, 4);
         _status.Text = "Bootstrap UI: library persistence, modes, favorites and skin pending.";
         layout.Controls.Add(_status, 0, 3);
     }
@@ -163,7 +171,13 @@ public class Form1 : BasePlayerForm
 
     private static Button MakeButton(string title, Action action)
     {
-        var button = new Button { Text = title, AutoSize = true, Height = 30 };
+        var button = new Button
+        {
+            Text = title,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(0, Theme.ControlHeight)
+        };
         button.Click += (_, _) => action();
         return button;
     }
@@ -285,6 +299,13 @@ public class Form1 : BasePlayerForm
         Theme.Apply(this, _videoHost);
         _nowPlaying.Font = Theme.Emphasis;
         _status.ForeColor = Theme.MutedText;
+    }
+
+    /// <summary>Gives the playlist 45% of the width once the real window size is known.</summary>
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+        _split.SplitterDistance = (int)(_split.Width * 0.45);
     }
 
     /// <inheritdoc/>
