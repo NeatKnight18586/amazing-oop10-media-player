@@ -75,6 +75,14 @@ public sealed class PlaybackOrder
     /// <returns>A valid index from 0 to <paramref name="count"/> - 1, or <see cref="NoNextIndex"/>.</returns>
     public int GetNextIndex(int currentIndex, int count, AdvanceReason reason)
     {
+        // Empty playlist: there is nothing to play.
+        if (count <= 0)
+            return NoNextIndex;
+
+        // Stale index (for example, the playlist got shorter): treat it as "nothing selected".
+        if (currentIndex >= count)
+            currentIndex = -1;
+
         // Repeat One: a track that ends on its own plays again.
         // Pressing Next still skips, so the user is never stuck on one song.
         if (currentIndex >= 0 && Repeat == RepeatMode.One && reason == AdvanceReason.MediaEnded)
@@ -108,6 +116,10 @@ public sealed class PlaybackOrder
     /// <summary>Picks a random track that has not been played yet in this shuffle round.</summary>
     private int GetShuffledIndex(int currentIndex, int count, AdvanceReason reason)
     {
+        // Only one track: there is nothing to shuffle. Stop for Repeat Off, otherwise replay it.
+        if (count == 1)
+            return reason == AdvanceReason.MediaEnded && Repeat == RepeatMode.Off ? NoNextIndex : 0;
+
         // The playlist size changed (or this is the first shuffle): start a new round.
         if (_shuffleCount != count)
             StartShuffleRound(currentIndex, count);
