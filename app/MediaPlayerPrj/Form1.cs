@@ -48,7 +48,7 @@ public class Form1 : BasePlayerForm
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 4,
-            Padding = new Padding(8)
+            Padding = new Padding(Theme.Gutter)
         };
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -84,7 +84,7 @@ public class Form1 : BasePlayerForm
         split.Panel1.Controls.Add(_playlistView);
 
         _videoHost.Dock = DockStyle.Fill;
-        _videoHost.BackColor = Color.Black;
+        _videoHost.BackColor = Theme.VideoBackdrop;
         split.Panel2.Controls.Add(_videoHost);
 
         var controls = new FlowLayoutPanel
@@ -282,8 +282,9 @@ public class Form1 : BasePlayerForm
     /// <inheritdoc/>
     protected override void ApplyTheme()
     {
-        BackColor = Color.FromArgb(242, 243, 247);
-        ForeColor = Color.FromArgb(25, 28, 34);
+        Theme.Apply(this, _videoHost);
+        _nowPlaying.Font = Theme.Emphasis;
+        _status.ForeColor = Theme.MutedText;
     }
 
     /// <inheritdoc/>
