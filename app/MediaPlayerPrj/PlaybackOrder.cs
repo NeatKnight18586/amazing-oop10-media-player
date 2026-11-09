@@ -21,6 +21,9 @@ public sealed class PlaybackOrder
     /// <summary>Returned when playback should stop instead of moving to another item.</summary>
     public const int NoNextIndex = -1;
 
+    /// <summary>Current repeat mode. Defaults to <see cref="RepeatMode.Off"/>.</summary>
+    public RepeatMode Repeat { get; set; } = RepeatMode.Off;
+
     /// <summary>
     /// Decides which playlist index should play after <paramref name="currentIndex"/>.
     /// </summary>
@@ -38,8 +41,13 @@ public sealed class PlaybackOrder
         if (currentIndex < count - 1)
             return currentIndex + 1;
 
-        // Reached the last item. What happens here depends on the repeat mode,
-        // which is added in the following checkpoints.
+        // Reached the last item.
+        // A user pressing Next always gets a song: wrap to the first item,
+        // matching the existing BasePlayerForm.Next() behavior.
+        if (reason == AdvanceReason.UserNext)
+            return 0;
+
+        // Repeat Off: the playlist finished naturally, so playback stops.
         return NoNextIndex;
     }
 }
