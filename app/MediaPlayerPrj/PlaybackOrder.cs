@@ -37,6 +37,11 @@ public sealed class PlaybackOrder
         if (currentIndex < 0)
             return 0;
 
+        // Repeat One: a track that ends on its own plays again.
+        // Pressing Next still skips, so the user is never stuck on one song.
+        if (Repeat == RepeatMode.One && reason == AdvanceReason.MediaEnded)
+            return currentIndex;
+
         // Normal order: move to the following item while one exists.
         if (currentIndex < count - 1)
             return currentIndex + 1;
