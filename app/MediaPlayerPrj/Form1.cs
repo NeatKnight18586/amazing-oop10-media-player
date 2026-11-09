@@ -16,6 +16,8 @@ public class Form1 : BasePlayerForm
 {
     private readonly ListView _playlistView = new();
     private readonly Label _nowPlaying = new();
+    private readonly Label _nowDetail = new();
+    private string _playState = "Ready";
     private readonly Label _elapsed = new();
     private readonly Label _status = new();
     private readonly Panel _videoHost = new();
@@ -50,11 +52,12 @@ public class Form1 : BasePlayerForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 5,
             Padding = new Padding(Theme.Gutter)
         };
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(layout);
@@ -89,6 +92,41 @@ public class Form1 : BasePlayerForm
         _videoHost.BackColor = Theme.VideoBackdrop;
         split.Panel2.Controls.Add(_videoHost);
 
+        var nowPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            ColumnCount = 2,
+            RowCount = 2,
+            Padding = new Padding(0, Theme.Gutter, 0, 0)
+        };
+        nowPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        nowPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        nowPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        nowPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        _nowPlaying.AutoSize = false;
+        _nowPlaying.Dock = DockStyle.Fill;
+        _nowPlaying.Height = Theme.ControlHeight;
+        _nowPlaying.TextAlign = ContentAlignment.MiddleLeft;
+        _nowPlaying.AutoEllipsis = true;
+        nowPanel.Controls.Add(_nowPlaying, 0, 0);
+
+        _nowDetail.AutoSize = false;
+        _nowDetail.Dock = DockStyle.Fill;
+        _nowDetail.Height = Theme.ControlHeight - 8;
+        _nowDetail.TextAlign = ContentAlignment.MiddleLeft;
+        _nowDetail.AutoEllipsis = true;
+        nowPanel.Controls.Add(_nowDetail, 0, 1);
+
+        _elapsed.AutoSize = true;
+        _elapsed.Anchor = AnchorStyles.Right;
+        _elapsed.Margin = new Padding(Theme.Gutter, 0, 0, 0);
+        _elapsed.TextAlign = ContentAlignment.MiddleRight;
+        nowPanel.Controls.Add(_elapsed, 1, 0);
+        nowPanel.SetRowSpan(_elapsed, 2);
+        layout.Controls.Add(nowPanel, 0, 2);
+
         var controls = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -96,7 +134,7 @@ public class Form1 : BasePlayerForm
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             WrapContents = true
         };
-        layout.Controls.Add(controls, 0, 2);
+        layout.Controls.Add(controls, 0, 3);
 
         controls.Controls.Add(MakeButton("Add MP3/MP4", async () => await AddFromDialogAsync()));
         controls.Controls.Add(MakeButton("Play", PlaySelected));
@@ -115,27 +153,15 @@ public class Form1 : BasePlayerForm
         controls.Controls.Add(volume);
         SetVolume(volume.Value);
 
-        _nowPlaying.AutoSize = false;
-        _nowPlaying.Width = 250;
-        _nowPlaying.Height = Theme.ControlHeight;
-        _nowPlaying.TextAlign = ContentAlignment.MiddleLeft;
-        _nowPlaying.AutoEllipsis = true;
-        _nowPlaying.Text = "Now playing: —";
-        controls.Controls.Add(_nowPlaying);
-
-        _elapsed.AutoSize = false;
-        _elapsed.Width = 150;
-        _elapsed.Height = Theme.ControlHeight;
-        _elapsed.TextAlign = ContentAlignment.MiddleLeft;
-        _elapsed.Text = "00:00:00 / 00:00:00";
-        controls.Controls.Add(_elapsed);
+        RefreshNowPlaying();
+        UpdateElapsed();
 
         _status.Dock = DockStyle.Fill;
         _status.AutoEllipsis = true;
         _status.TextAlign = ContentAlignment.MiddleLeft;
         _status.Padding = new Padding(0, 4, 0, 4);
         _status.Text = "Bootstrap UI: library persistence, modes, favorites and skin pending.";
-        layout.Controls.Add(_status, 0, 3);
+        layout.Controls.Add(_status, 0, 4);
     }
 
     private MenuStrip BuildMenu()
@@ -314,22 +340,76 @@ public class Form1 : BasePlayerForm
     private static string Format(TimeSpan time) =>
         string.Format("{0:00}:{1:00}:{2:00}", (int)time.TotalHours, time.Minutes, time.Seconds);
 
+    /// <summary>Headline of the Now Playing area: the title, or a hint when idle.</summary>
+    internal static string NowPlayingTitle(MediaItem? item) =>
+        item == null ? "Nothing playing" : item.Title;
+
+    /// <summary>
+    /// Second Now Playing line: state, artist, media type and album/resolution,
+    /// skipping any blank part; shows how to start when the library is empty.
+    /// </summary>
+    internal static string NowPlayingDetail(MediaItem? item, string state)
+    {
+        if (item == null) return "Add files with Ctrl+O, then press F5 to play.";
+
+        var parts = new[] { state, item.Artist, item.MediaType, item.Extra };
+        return string.Join("  ·  ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+    }
+
+    /// <summary>Maps a status message to the play state it implies, or null if none.</summary>
+    internal static string? PlayStateFor(string status)
+    {
+        if (status.StartsWith("Playing", StringComparison.Ordinal)) return "Playing";
+        if (status == "Paused") return "Paused";
+        if (status == "Stopped") return "Stopped";
+        return null;
+    }
+
+    /// <summary>True for messages the user must act on (missing file, playback failure).</summary>
+    internal static bool IsErrorStatus(string status) =>
+        status.StartsWith("This file is missing", StringComparison.Ordinal)
+        || status.StartsWith("Unable to play", StringComparison.Ordinal)
+        || status.StartsWith("Skipped unreadable", StringComparison.Ordinal)
+        || status.StartsWith("The library is empty", StringComparison.Ordinal);
+
+    private void RefreshNowPlaying()
+    {
+        MediaItem? item = CurrentIndex >= 0 && CurrentIndex < Playlist.Count
+            ? Playlist[CurrentIndex]
+            : null;
+        _nowPlaying.Text = NowPlayingTitle(item);
+        _nowDetail.Text = NowPlayingDetail(item, _playState);
+    }
+
     /// <inheritdoc/>
     protected override void OnNowPlayingChanged(MediaItem item)
     {
-        _nowPlaying.Text = "Now playing: " + item.Title + " — " + item.Artist;
+        RefreshNowPlaying();
         SelectCurrentRow();
         UpdateElapsed();
     }
 
     /// <inheritdoc/>
-    protected override void SetStatus(string text) => _status.Text = text;
+    protected override void SetStatus(string text)
+    {
+        _status.Text = text;
+        _status.ForeColor = IsErrorStatus(text) ? Theme.Error : Theme.MutedText;
+
+        string? state = PlayStateFor(text);
+        if (state != null)
+        {
+            _playState = state;
+            RefreshNowPlaying();
+        }
+    }
 
     /// <inheritdoc/>
     protected override void ApplyTheme()
     {
         Theme.Apply(this, _videoHost);
         _nowPlaying.Font = Theme.Emphasis;
+        _nowDetail.ForeColor = Theme.MutedText;
+        _elapsed.Font = Theme.Clock;
         _status.ForeColor = Theme.MutedText;
     }
 

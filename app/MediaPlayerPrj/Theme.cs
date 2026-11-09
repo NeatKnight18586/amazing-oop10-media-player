@@ -22,6 +22,12 @@ public static class Theme
     /// <summary>Secondary text such as the status line.</summary>
     public static readonly Color MutedText = Color.FromArgb(78, 84, 96);
 
+    /// <summary>Color for actionable error messages (contrast about 7:1 on Background).</summary>
+    public static readonly Color Error = Color.FromArgb(160, 28, 28);
+
+    /// <summary>Fixed-width font for the elapsed/total clock so digits do not jitter.</summary>
+    public static readonly Font Clock = new("Consolas", 12f, FontStyle.Regular);
+
     /// <summary>Accent used for primary buttons.</summary>
     public static readonly Color Accent = Color.FromArgb(31, 111, 98);
 
