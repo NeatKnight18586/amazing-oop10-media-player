@@ -72,15 +72,17 @@ public class Form1 : BasePlayerForm
         _playlistView.View = View.Details;
         _playlistView.FullRowSelect = true;
         _playlistView.MultiSelect = false;
-        _playlistView.GridLines = true;
+        _playlistView.GridLines = false;
         _playlistView.HideSelection = false;
+        _playlistView.ShowItemToolTips = true;
         _playlistView.Columns.Add("Title", 170);
         _playlistView.Columns.Add("Artist", 120);
         _playlistView.Columns.Add("Album / Resolution", 145);
-        _playlistView.Columns.Add("Length", 90);
-        _playlistView.Columns.Add("Type", 65);
+        _playlistView.Columns.Add("Length", 70, HorizontalAlignment.Right);
+        _playlistView.Columns.Add("Type", 55);
         _playlistView.Columns.Add("Path", 250);
         _playlistView.DoubleClick += (_, _) => PlaySelected();
+        _playlistView.SizeChanged += (_, _) => FitPlaylistColumns();
         split.Panel1.Controls.Add(_playlistView);
 
         _videoHost.Dock = DockStyle.Fill;
@@ -252,6 +254,36 @@ public class Form1 : BasePlayerForm
         }
     }
 
+    /// <summary>
+    /// Keeps Length/Type/Path at fixed widths and shares the rest of the row
+    /// between Title, Artist and Album/Resolution so long titles stay readable.
+    /// </summary>
+    private void FitPlaylistColumns()
+    {
+        if (_playlistView.Columns.Count != 6) return;
+
+        int length = LogicalToDeviceUnits(70);
+        int type = LogicalToDeviceUnits(55);
+        int path = LogicalToDeviceUnits(250);
+        int scrollbar = SystemInformation.VerticalScrollBarWidth;
+        int titleMin = LogicalToDeviceUnits(130);
+        int artistMin = LogicalToDeviceUnits(80);
+        int albumMin = LogicalToDeviceUnits(80);
+
+        // Title/Artist/Album/Length always get the space first; Type and Path
+        // are secondary and are reached by horizontal scrolling in narrow panes.
+        int wide = _playlistView.ClientSize.Width - length - type - path - scrollbar;
+        int narrow = _playlistView.ClientSize.Width - length - scrollbar;
+        int flexible = Math.Max(Math.Max(wide, narrow), titleMin + artistMin + albumMin);
+
+        _playlistView.Columns[0].Width = Math.Max(titleMin, flexible * 45 / 100);
+        _playlistView.Columns[1].Width = Math.Max(artistMin, flexible * 30 / 100);
+        _playlistView.Columns[2].Width = Math.Max(albumMin, flexible * 25 / 100);
+        _playlistView.Columns[3].Width = length;
+        _playlistView.Columns[4].Width = type;
+        _playlistView.Columns[5].Width = path;
+    }
+
     private void SelectCurrentRow()
     {
         if (CurrentIndex >= 0 && CurrentIndex < _playlistView.Items.Count)
@@ -301,11 +333,25 @@ public class Form1 : BasePlayerForm
         _status.ForeColor = Theme.MutedText;
     }
 
-    /// <summary>Gives the playlist 45% of the width once the real window size is known.</summary>
+    /// <summary>
+    /// Gives the playlist half the width once the real window size is known,
+    /// and keeps both panes from being dragged below a usable size so the video
+    /// host can never be squeezed away.
+    /// </summary>
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
-        _split.SplitterDistance = (int)(_split.Width * 0.45);
+        int playlistMin = LogicalToDeviceUnits(260);
+        int videoMin = LogicalToDeviceUnits(260);
+        int available = _split.Width - _split.SplitterWidth;
+        if (available >= playlistMin + videoMin)
+        {
+            _split.Panel1MinSize = playlistMin;
+            _split.Panel2MinSize = videoMin;
+        }
+        _split.SplitterDistance = Math.Clamp((int)(_split.Width * 0.5),
+            _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, available - _split.Panel2MinSize));
+        FitPlaylistColumns();
     }
 
     /// <inheritdoc/>
