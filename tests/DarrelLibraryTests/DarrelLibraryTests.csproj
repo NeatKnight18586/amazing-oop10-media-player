@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Isolated unit tests for Darrel's Media Library, Storage, and Sorter (Issue #3).
+    Linked directly to avoid modifying application project settings or dependencies.
+    RollForward allows tests targeting net8.0 to execute on host machines with newer .NET runtimes (e.g., .NET 10).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\app\MediaPlayerPrj\MediaItem.cs" Link="Linked\MediaItem.cs" />
+    <Compile Include="..\..\app\MediaPlayerPrj\AudioItem.cs" Link="Linked\AudioItem.cs" />
+    <Compile Include="..\..\app\MediaPlayerPrj\VideoItem.cs" Link="Linked\VideoItem.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>
