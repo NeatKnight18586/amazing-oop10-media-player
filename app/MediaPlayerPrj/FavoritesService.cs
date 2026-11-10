@@ -168,6 +168,42 @@ public class FavoritesService
     }
 
     /// <summary>
+    /// Adds multiple paths in batch, ignoring duplicates and invalid entries.
+    /// </summary>
+    /// <param name="paths">The collection of paths to add.</param>
+    /// <returns>The number of new paths successfully added.</returns>
+    public int AddRange(IEnumerable<string>? paths)
+    {
+        if (paths == null) return 0;
+        int added = 0;
+        foreach (var path in paths)
+        {
+            string? normalized = FavoritesStore.NormalizePath(path);
+            if (normalized != null && _favorites.Add(normalized))
+            {
+                added++;
+            }
+        }
+        if (added > 0)
+        {
+            Save();
+        }
+        return added;
+    }
+
+    /// <summary>
+    /// Clears all favorites and persists the empty state.
+    /// </summary>
+    public void Clear()
+    {
+        if (_favorites.Count > 0)
+        {
+            _favorites.Clear();
+            Save();
+        }
+    }
+
+    /// <summary>
     /// Reloads favorites from the backing store.
     /// </summary>
     public void Reload()

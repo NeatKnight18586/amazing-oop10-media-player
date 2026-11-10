@@ -244,4 +244,33 @@ public class FavoritesServiceTests
         Assert.AreEqual(1, filtered.Count);
         Assert.AreSame(item1, filtered[0]);
     }
+
+    [TestMethod]
+    public void Clear_EmptiesCollectionAndSaves()
+    {
+        string p1 = Path.Combine(Path.GetTempPath(), "cl1.mp3");
+        string p2 = Path.Combine(Path.GetTempPath(), "cl2.mp3");
+        _service.Add(p1);
+        _service.Add(p2);
+        Assert.AreEqual(2, _service.Count);
+
+        _service.Clear();
+
+        Assert.AreEqual(0, _service.Count);
+        Assert.IsFalse(_service.IsFavorite(p1));
+        Assert.IsFalse(_service.IsFavorite(p2));
+    }
+
+    [TestMethod]
+    public void AddRange_AddsUniqueOnlyAndReportsCount()
+    {
+        string p1 = Path.Combine(Path.GetTempPath(), "ar1.mp3");
+        string p2 = Path.Combine(Path.GetTempPath(), "ar2.mp3");
+        _service.Add(p1); // already 1 item
+
+        int added = _service.AddRange(new[] { p1, p2, "   ", null!, p2 });
+
+        Assert.AreEqual(1, added, "Only p2 should be added as new unique.");
+        Assert.AreEqual(2, _service.Count);
+    }
 }

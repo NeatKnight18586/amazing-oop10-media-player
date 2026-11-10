@@ -87,6 +87,20 @@ public class FavoritesStoreTests
             "Paths that differ only by '..' traversal should normalize identically.");
     }
 
+    [TestMethod]
+    public void NormalizePath_QuotedPath_StripsQuotesAndNormalizes()
+    {
+        string raw = Path.Combine(Path.GetTempPath(), "quoted.mp3");
+        string doubleQuoted = $"\"{raw}\"";
+        string singleQuoted = $"'{raw}'";
+
+        string? nDouble = FavoritesStore.NormalizePath(doubleQuoted);
+        string? nSingle = FavoritesStore.NormalizePath(singleQuoted);
+
+        Assert.AreEqual(Path.GetFullPath(raw), nDouble);
+        Assert.AreEqual(Path.GetFullPath(raw), nSingle);
+    }
+
     // ──────────────────────────────────────────────
     //  Constructor
     // ──────────────────────────────────────────────

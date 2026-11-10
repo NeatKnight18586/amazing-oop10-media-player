@@ -157,9 +157,21 @@ public class FavoritesStore
         if (string.IsNullOrWhiteSpace(path))
             return null;
 
+        string trimmed = path.Trim();
+        // Remove surrounding quotes if present (common in file copy/paste or drag-and-drop)
+        if (trimmed.Length >= 2 &&
+            ((trimmed.StartsWith("\"") && trimmed.EndsWith("\"")) ||
+             (trimmed.StartsWith("'") && trimmed.EndsWith("'"))))
+        {
+            trimmed = trimmed.Substring(1, trimmed.Length - 2).Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return null;
+
         try
         {
-            return Path.GetFullPath(path.Trim());
+            return Path.GetFullPath(trimmed);
         }
         catch (Exception) // ArgumentException, NotSupportedException, PathTooLongException
         {
