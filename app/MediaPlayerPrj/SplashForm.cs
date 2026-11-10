@@ -18,6 +18,13 @@ public partial class SplashForm : Form
         InitializeComponent();
         if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
             return;
+        // Match the aged-paper texture used on the main player.
+        Image? splashPaper = Theme.LoadImage("paper_texture.png");
+        if (splashPaper != null)
+        {
+            root.BackgroundImage = splashPaper;
+            root.BackgroundImageLayout = ImageLayout.Tile;
+        }
         memberPhotos = new [] { picMember1, picMember2, picMember3, picMember4, picMember5 };
         memberCaptions = new [] { lblMember1, lblMember2, lblMember3, lblMember4, lblMember5 };
         picLogo.Image = Theme.LoadImage("logo.png");
