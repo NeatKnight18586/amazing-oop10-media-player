@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace mediaPlayerPrj;
@@ -15,6 +16,8 @@ public partial class SplashForm : Form
     public SplashForm()
     {
         InitializeComponent();
+        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            return;
         memberPhotos = new [] { picMember1, picMember2, picMember3, picMember4, picMember5 };
         memberCaptions = new [] { lblMember1, lblMember2, lblMember3, lblMember4, lblMember5 };
         picLogo.Image = Theme.LoadImage("logo.png");

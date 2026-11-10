@@ -2,7 +2,8 @@
 
 Place these original exported images in this directory before making the final release:
 
-- `cassette_art.png` — empty/inset cassette-display artwork, background for the Now Playing stage;
+- `cassette_art.png` — cassette-display artwork, background for the Now Playing stage;
+- `paper_texture.png` — original paper-texture crop used on the window and button areas;
 - `skin_background.png` — full original retro skin reference and design source;
 - `logo.png` and `logo.ico` — app badge and Windows icon;
 - `splash_background.png` — approved splash artwork reference;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ public partial class Form1 : BasePlayerForm
     public Form1()
     {
         InitializeComponent();
+        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            return;
         AttachVideo(pnlVideo);
         pnlVideo.Visible = false;
         InitializeFavorites();
@@ -403,6 +406,29 @@ public partial class Form1 : BasePlayerForm
         if (cassette != null)
             pnlCassette.BackgroundImage = cassette;
         pnlCassette.BackgroundImageLayout = ImageLayout.Stretch;
+        Image? texture = Theme.LoadImage("paper_texture.png");
+        if (texture != null)
+        {
+            layoutRoot.BackgroundImage = texture;
+            layoutRoot.BackgroundImageLayout = ImageLayout.Tile;
+            flowTransport.BackgroundImage = Theme.LoadImage("paper_texture.png");
+            flowTransport.BackgroundImageLayout = ImageLayout.Tile;
+            flowSeek.BackgroundImage = Theme.LoadImage("paper_texture.png");
+            flowSeek.BackgroundImageLayout = ImageLayout.Tile;
+        }
+
+        Button[] styledButtons = {
+            btnPrevious, btnPlay, btnPause, btnStop, btnNext,
+            btnAdd, btnFavorite, btnShuffle, btnRepeat
+        };
+        foreach (Button button in styledButtons)
+        {
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderColor = Color.FromArgb(123, 81, 45);
+            button.BackColor = Color.FromArgb(235, 194, 134);
+            button.ForeColor = Theme.Ink;
+            button.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        }
         Icon? appIcon = Theme.TryLoadIcon("logo.ico");
         if (appIcon != null)
             Icon = appIcon;
