@@ -165,7 +165,7 @@ public class FavoritesServiceTests
     [TestMethod]
     public void IsFavorite_NullOrEmpty_ReturnsFalse()
     {
-        Assert.IsFalse(_service.IsFavorite(null));
+        Assert.IsFalse(_service.IsFavorite((string?)null));
         Assert.IsFalse(_service.IsFavorite(""));
         Assert.IsFalse(_service.IsFavorite("   "));
     }

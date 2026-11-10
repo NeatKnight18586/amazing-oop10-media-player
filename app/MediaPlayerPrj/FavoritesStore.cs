@@ -169,6 +169,16 @@ public class FavoritesStore
         if (string.IsNullOrWhiteSpace(trimmed))
             return null;
 
+        // Windows disallows wildcard, pipe, angle-bracket, quote and control
+        // characters even when a platform path-normalizer accepts them.
+        foreach (char character in trimmed)
+        {
+            if (character < ' ' ||
+                character == '|' || character == '?' || character == '*' ||
+                character == '<' || character == '>' || character == '"')
+                return null;
+        }
+
         try
         {
             return Path.GetFullPath(trimmed);

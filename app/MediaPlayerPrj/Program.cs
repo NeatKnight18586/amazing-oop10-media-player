@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace mediaPlayerPrj;
 
-/// <summary>Application entry point for the reconstructed instructor sample.</summary>
+/// <summary>Application entry point.</summary>
 internal static class Program
 {
     [STAThread]
@@ -12,12 +12,14 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         try
         {
+            using (var splash = new SplashForm())
+                splash.ShowDialog();
             Application.Run(new Form1());
         }
         catch (Exception ex)
         {
             MessageBox.Show(
-                "Amazing Player could not start. Check VLC dependencies.\n\n" + ex.Message,
+                "Amazing Player could not start.\n\n" + ex.Message,
                 "Amazing Player",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);

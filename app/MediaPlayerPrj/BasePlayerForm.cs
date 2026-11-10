@@ -168,22 +168,33 @@ public class BasePlayerForm : Form, IMediaControls
 
         using Media media = new Media(_libVLC, path, FromType.FromPath);
         await media.Parse(MediaParseOptions.ParseLocal);
-        string title = media.Meta(MetadataType.Title);
+        string title = media.Meta(MetadataType.Title) ?? "";
         if (string.IsNullOrWhiteSpace(title))
             title = Path.GetFileNameWithoutExtension(path);
 
-        string artist = media.Meta(MetadataType.Artist);
+        string artist = media.Meta(MetadataType.Artist) ?? "";
         if (string.IsNullOrWhiteSpace(artist)) artist = "Unknown Artist";
 
         TimeSpan duration = TimeSpan.FromMilliseconds(Math.Max(0, media.Duration));
         if (ext == ".mp3")
         {
-            string album = media.Meta(MetadataType.Album);
+            string album = media.Meta(MetadataType.Album) ?? "-";
             return new AudioItem(title, artist, duration, path, album);
         }
 
-        // TODO P2: resolve actual video resolution using VLC track metadata.
-        return new VideoItem(title, artist, duration, path, "Unknown");
+        string resolution = "Unknown";
+        foreach (MediaTrack track in media.Tracks)
+        {
+            if (track.TrackType != TrackType.Video) continue;
+            uint width = track.Data.Video.Width;
+            uint height = track.Data.Video.Height;
+            if (width > 0 && height > 0)
+            {
+                resolution = width + "x" + height;
+                break;
+            }
+        }
+        return new VideoItem(title, artist, duration, path, resolution);
     }
 
     /// <summary>Notifies the derived form that the playing item changed.</summary>

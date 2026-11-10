@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../app/MediaPlayerPrj/MediaItem.cs" Link="MediaItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/AudioItem.cs" Link="AudioItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/VideoItem.cs" Link="VideoItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/LibraryStore.cs" Link="LibraryStore.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/LibrarySorter.cs" Link="LibrarySorter.cs" />
+  </ItemGroup>
+</Project>
