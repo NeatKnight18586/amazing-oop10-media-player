@@ -195,10 +195,10 @@ public partial class Form1
         lblCassetteTitle.Name = "lblCassetteTitle";
         lblCassetteTitle.Text = "Select a song";
         lblCassetteTitle.TextAlign = ContentAlignment.MiddleCenter;
-        lblCassetteTitle.Location = new Point(192, 48);
-        lblCassetteTitle.Size = new Size(360, 46);
+        lblCassetteTitle.Location = new Point(175, 63);
+        lblCassetteTitle.Size = new Size(398, 85);
         lblCassetteTitle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        lblCassetteTitle.Font = new Font("Segoe Print", 19F, FontStyle.Regular);
+        lblCassetteTitle.Font = new Font("Segoe Print", 18F, FontStyle.Regular);
         lblCassetteTitle.BackColor = Color.FromArgb(239, 190, 120);
         lblCassetteTitle.ForeColor = Color.FromArgb(39, 48, 35);
         pnlVideo.Name = "pnlVideo";
