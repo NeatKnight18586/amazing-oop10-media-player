@@ -403,4 +403,129 @@ public class FavoritesStoreTests
         }
         finally { File.Delete(file); }
     }
+
+    [TestMethod]
+    public void Save_CreatesParentDirectoryIfNotExists()
+    {
+        string subDir = Path.Combine(Path.GetTempPath(), "fav_sub_" + Guid.NewGuid());
+        string file = Path.Combine(subDir, "Favorites.txt");
+        string s = Path.Combine(Path.GetTempPath(), "test.mp3");
+
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { s });
+
+            Assert.IsTrue(Directory.Exists(subDir), "Parent directory should be auto-created.");
+            Assert.IsTrue(File.Exists(file));
+        }
+        finally
+        {
+            if (File.Exists(file)) File.Delete(file);
+            if (Directory.Exists(subDir)) Directory.Delete(subDir, true);
+        }
+    }
+
+    [TestMethod]
+    public void Save_UnicodePaths_PreservesEncodingInUtf8()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string unicodeSong = Path.Combine(Path.GetTempPath(), "花火_hikari_canción.mp3");
+
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { unicodeSong });
+
+            var loaded = store.Load(out int skipped);
+
+            Assert.AreEqual(1, loaded.Count);
+            Assert.AreEqual(0, skipped);
+            Assert.IsTrue(loaded.Contains(Path.GetFullPath(unicodeSong)));
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_CorruptFileWithBinaryAndGarbage_RecoversValidLinesSafely()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string validTrack = Path.Combine(Path.GetTempPath(), "valid.mp3");
+
+        try
+        {
+            // Corrupt file with invalid path characters, blank rows, and valid path
+            var content = new[]
+            {
+                "???:::<<<invalid>>>",
+                "   ",
+                validTrack,
+                "another\0invalid\0row",
+                validTrack // duplicate
+            };
+            File.WriteAllLines(file, content);
+
+            var store = new FavoritesStore(file);
+            var loaded = store.Load(out int skipped);
+
+            Assert.AreEqual(1, loaded.Count, "Only validTrack should load.");
+            Assert.IsTrue(loaded.Contains(Path.GetFullPath(validTrack)));
+            Assert.IsTrue(skipped >= 3, "Skipped count should record invalid/blank/duplicate rows.");
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_FileWithUtf8Bom_LoadsCorrectly()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string song = Path.Combine(Path.GetTempPath(), "bom_test.mp3");
+
+        try
+        {
+            // Write with UTF-8 BOM explicitly
+            File.WriteAllLines(file, new[] { song }, System.Text.Encoding.UTF8);
+
+            var store = new FavoritesStore(file);
+            var loaded = store.Load(out int skipped);
+
+            Assert.AreEqual(1, loaded.Count);
+            Assert.AreEqual(0, skipped);
+            Assert.IsTrue(loaded.Contains(Path.GetFullPath(song)));
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void SaveAndLoad_LargeBatch_MaintainsIntegrity()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        var list = new List<string>();
+        for (int i = 0; i < 200; i++)
+        {
+            list.Add(Path.Combine(Path.GetTempPath(), $"batch_{i}.mp3"));
+        }
+
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(list);
+
+            var loaded = store.Load(out int skipped);
+
+            Assert.AreEqual(200, loaded.Count);
+            Assert.AreEqual(0, skipped);
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void FavoritesIOException_PreservesMessageAndInnerException()
+    {
+        var inner = new IOException("Disk failure simulation");
+        var ex = new FavoritesIOException("Custom error message", inner);
+
+        Assert.AreEqual("Custom error message", ex.Message);
+        Assert.AreSame(inner, ex.InnerException);
+    }
 }
