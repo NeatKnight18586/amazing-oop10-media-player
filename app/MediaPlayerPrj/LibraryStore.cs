@@ -114,6 +114,51 @@ public static class LibraryStore
     }
 
     /// <summary>
+    /// Persists media items to the specified file path in UTF-8 six-field format (FR3, Appendix B).
+    /// Creates the target directory if it does not already exist.
+    /// </summary>
+    /// <param name="items">Collection of media items to persist.</param>
+    /// <param name="filePath">Target file path, or null/empty to use <see cref="DefaultFileName"/>.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="items"/> is null.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when access to the file or directory is denied.</exception>
+    /// <exception cref="IOException">Thrown when the file cannot be written, is locked, or disk error occurs.</exception>
+    public static void Save(IEnumerable<MediaItem> items, string? filePath = null)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        string targetPath = string.IsNullOrWhiteSpace(filePath) ? DefaultFileName : filePath;
+        string? directory = Path.GetDirectoryName(targetPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        using var stream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        Save(writer, items);
+    }
+
+    /// <summary>
+    /// Serializes media items to an open <see cref="TextWriter"/> in six-field format.
+    /// </summary>
+    /// <param name="writer">Target text writer.</param>
+    /// <param name="items">Media items to serialize.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="writer"/> or <paramref name="items"/> is null.</exception>
+    public static void Save(TextWriter writer, IEnumerable<MediaItem> items)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(items);
+
+        foreach (var item in items)
+        {
+            if (item != null)
+            {
+                writer.WriteLine(item.ToFileLine());
+            }
+        }
+    }
+
+    /// <summary>
     /// Parses a single line from Library.txt into a concrete <see cref="MediaItem"/> subclass.
     /// Returns null if the line is malformed, missing fields, or contains invalid data.
     /// </summary>

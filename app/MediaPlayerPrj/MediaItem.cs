@@ -55,7 +55,7 @@ public abstract class MediaItem
 
     /// <summary>Total running time in HH:MM:SS format.</summary>
     public string DurationText =>
-        string.Format("{0:00}:{1:00}:{2:00}", (int)Duration.TotalHours, Duration.Minutes, Duration.Seconds);
+        string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:00}:{1:00}:{2:00}", (int)Duration.TotalHours, Duration.Minutes, Duration.Seconds);
 
     /// <summary>Serializes the six fields specified in Appendix B of the final guide.</summary>
     public virtual string ToFileLine() =>
