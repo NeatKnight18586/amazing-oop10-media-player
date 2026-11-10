@@ -106,7 +106,39 @@ public class FavoritesStore
     /// </exception>
     public void Save(IEnumerable<string> paths)
     {
-        // Stub — implemented in increment 4.
+        if (paths == null) throw new ArgumentNullException(nameof(paths));
+
+        // Filter out null/blank entries and collect valid lines.
+        var lines = new List<string>();
+        foreach (string? p in paths)
+        {
+            if (!string.IsNullOrWhiteSpace(p))
+                lines.Add(p);
+        }
+
+        try
+        {
+            // Ensure the directory exists (first-run scenario).
+            string? dir = Path.GetDirectoryName(_filePath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            // Write atomically via a temp file to avoid partial writes
+            // corrupting an existing Favorites.txt on crash.
+            string tempFile = _filePath + ".tmp";
+            File.WriteAllLines(tempFile, lines, new System.Text.UTF8Encoding(false));
+            File.Move(tempFile, _filePath, overwrite: true);
+        }
+        catch (IOException ex)
+        {
+            throw new FavoritesIOException(
+                "Could not save favorites file: " + _filePath, ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new FavoritesIOException(
+                "Access denied writing favorites file: " + _filePath, ex);
+        }
     }
 
     /// <summary>

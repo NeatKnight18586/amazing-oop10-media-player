@@ -286,4 +286,107 @@ public class FavoritesStoreTests
         }
         finally { File.Delete(file); }
     }
+
+    // ──────────────────────────────────────────────
+    //  Save
+    // ──────────────────────────────────────────────
+
+    [TestMethod]
+    public void Save_ValidPaths_WritesOnePerLine()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string s1 = Path.Combine(Path.GetTempPath(), "a.mp3");
+        string s2 = Path.Combine(Path.GetTempPath(), "b.mp4");
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { s1, s2 });
+
+            string[] written = File.ReadAllLines(file);
+            Assert.AreEqual(2, written.Length);
+            Assert.AreEqual(s1, written[0]);
+            Assert.AreEqual(s2, written[1]);
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Save_EmptyCollection_WritesEmptyFile()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(Array.Empty<string>());
+
+            Assert.IsTrue(File.Exists(file), "File should be created even when empty.");
+            Assert.AreEqual(0, File.ReadAllLines(file).Length);
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Save_NullEntriesInCollection_AreSkipped()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string good = Path.Combine(Path.GetTempPath(), "good.mp3");
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { null!, "  ", good });
+
+            string[] written = File.ReadAllLines(file);
+            Assert.AreEqual(1, written.Length, "Only valid entries should be written.");
+            Assert.AreEqual(good, written[0]);
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentNullException))]
+    public void Save_NullArgument_Throws()
+    {
+        var store = new FavoritesStore(Path.Combine(Path.GetTempPath(), "x.txt"));
+        store.Save(null!);
+    }
+
+    [TestMethod]
+    public void Save_ThenLoad_RoundTrip()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string s1 = Path.Combine(Path.GetTempPath(), "song1.mp3");
+        string s2 = Path.Combine(Path.GetTempPath(), "video.mp4");
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { s1, s2 });
+
+            var loaded = store.Load(out int skipped);
+
+            Assert.AreEqual(2, loaded.Count, "Round-trip should preserve all entries.");
+            Assert.AreEqual(0, skipped);
+            Assert.IsTrue(loaded.Contains(Path.GetFullPath(s1)));
+            Assert.IsTrue(loaded.Contains(Path.GetFullPath(s2)));
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Save_OverwritesExistingFile()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string old = Path.Combine(Path.GetTempPath(), "old.mp3");
+        string newer = Path.Combine(Path.GetTempPath(), "new.mp3");
+        try
+        {
+            var store = new FavoritesStore(file);
+            store.Save(new[] { old });
+            store.Save(new[] { newer });
+
+            string[] written = File.ReadAllLines(file);
+            Assert.AreEqual(1, written.Length, "Second save should overwrite.");
+            Assert.AreEqual(newer, written[0]);
+        }
+        finally { File.Delete(file); }
+    }
 }
