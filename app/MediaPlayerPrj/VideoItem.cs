@@ -5,14 +5,20 @@ namespace mediaPlayerPrj;
 /// <summary>A local MP4 video with resolution metadata.</summary>
 public sealed class VideoItem : MediaItem
 {
-    /// <summary>Video resolution when available.</summary>
-    public string Resolution { get; set; }
+    private string _resolution = "Unknown";
 
-    /// <summary>Creates a video item.</summary>
-    public VideoItem(string title, string artist, TimeSpan duration, string filePath, string resolution)
+    /// <summary>Video resolution (e.g., 1920x1080), or Unknown when unavailable.</summary>
+    public string Resolution
+    {
+        get => _resolution;
+        set => _resolution = string.IsNullOrWhiteSpace(value) ? "Unknown" : value.Trim();
+    }
+
+    /// <summary>Creates a video item with validated resolution metadata.</summary>
+    public VideoItem(string title, string artist, TimeSpan duration, string filePath, string? resolution = "Unknown")
         : base(title, artist, duration, filePath)
     {
-        Resolution = string.IsNullOrWhiteSpace(resolution) ? "Unknown" : resolution;
+        Resolution = resolution!;
     }
 
     /// <inheritdoc/>

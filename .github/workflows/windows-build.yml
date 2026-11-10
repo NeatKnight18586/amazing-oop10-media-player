@@ -8,6 +8,7 @@ on:
       - '.github/workflows/windows-build.yml'
   pull_request:
     paths:
+      - 'tests/**'
       - 'app/**'
       - '.github/workflows/windows-build.yml'
 
@@ -27,6 +28,8 @@ jobs:
         run: dotnet build AmazingPlayer.sln --configuration Release --no-restore
       - name: Verify library persistence and sorting
         run: dotnet test tests/LibraryTests/LibraryTests.csproj --configuration Release --verbosity minimal
+      - name: Verify Darrel library tests
+        run: dotnet test tests/DarrelLibraryTests/DarrelLibraryTests.csproj --configuration Release --verbosity minimal
       - name: Verify playback modes
         run: dotnet test tests/PlaybackModes.Tests/PlaybackModes.Tests.csproj --configuration Release --verbosity minimal
       - name: Verify favorites

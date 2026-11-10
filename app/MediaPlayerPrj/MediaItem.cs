@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 
 namespace mediaPlayerPrj;
 
@@ -7,30 +6,45 @@ namespace mediaPlayerPrj;
 public abstract class MediaItem
 {
     private string _title = "Unknown Title";
+    private string _artist = "Unknown Artist";
+    private TimeSpan _duration = TimeSpan.Zero;
+    private string _filePath = string.Empty;
 
-    /// <summary>Validated media title.</summary>
+    /// <summary>Validated media title. Defaults to 'Unknown Title' when null or whitespace.</summary>
     public string Title
     {
         get => _title;
         set => _title = string.IsNullOrWhiteSpace(value) ? "Unknown Title" : value.Trim();
     }
 
-    /// <summary>Artist or creator.</summary>
-    public string Artist { get; set; }
+    /// <summary>Artist or creator. Defaults to 'Unknown Artist' when null or whitespace.</summary>
+    public string Artist
+    {
+        get => _artist;
+        set => _artist = string.IsNullOrWhiteSpace(value) ? "Unknown Artist" : value.Trim();
+    }
 
-    /// <summary>Length of the media file.</summary>
-    public TimeSpan Duration { get; set; }
+    /// <summary>Length of the media file, clamped to non-negative values.</summary>
+    public TimeSpan Duration
+    {
+        get => _duration;
+        set => _duration = value < TimeSpan.Zero ? TimeSpan.Zero : value;
+    }
 
-    /// <summary>Absolute local path.</summary>
-    public string FilePath { get; set; }
+    /// <summary>Absolute local path to media file.</summary>
+    public string FilePath
+    {
+        get => _filePath;
+        set => _filePath = (value ?? string.Empty).Trim();
+    }
 
     /// <summary>Constructs validated common metadata.</summary>
     protected MediaItem(string title, string artist, TimeSpan duration, string filePath)
     {
         Title = title;
-        Artist = string.IsNullOrWhiteSpace(artist) ? "Unknown Artist" : artist.Trim();
-        Duration = duration < TimeSpan.Zero ? TimeSpan.Zero : duration;
-        FilePath = filePath ?? string.Empty;
+        Artist = artist;
+        Duration = duration;
+        FilePath = filePath;
     }
 
     /// <summary>Audio or Video.</summary>
@@ -41,7 +55,7 @@ public abstract class MediaItem
 
     /// <summary>Total running time in HH:MM:SS format.</summary>
     public string DurationText =>
-        string.Format("{0:00}:{1:00}:{2:00}", (int)Duration.TotalHours, Duration.Minutes, Duration.Seconds);
+        string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:00}:{1:00}:{2:00}", (int)Duration.TotalHours, Duration.Minutes, Duration.Seconds);
 
     /// <summary>Serializes the six fields specified in Appendix B of the final guide.</summary>
     public virtual string ToFileLine() =>
