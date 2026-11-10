@@ -101,6 +101,65 @@ public class FavoritesService
     public bool ToggleFavorite(string? path) => Toggle(path);
 
     /// <summary>
+    /// Determines whether the specified file path is marked as a favorite.
+    /// Uses normalized, case-insensitive path comparison.
+    /// </summary>
+    /// <param name="path">The media file path to inspect.</param>
+    /// <returns>True if the path is an active favorite; false otherwise.</returns>
+    public bool IsFavorite(string? path)
+    {
+        string? normalized = FavoritesStore.NormalizePath(path);
+        if (normalized == null)
+            return false;
+
+        return _favorites.Contains(normalized);
+    }
+
+    /// <summary>
+    /// Determines whether the specified media item is marked as a favorite.
+    /// </summary>
+    /// <param name="item">The media item to inspect.</param>
+    /// <returns>True if the item's file path is a favorite; false if null or not favorite.</returns>
+    public bool IsFavorite(MediaItem? item) => item != null && IsFavorite(item.FilePath);
+
+    /// <summary>
+    /// Returns a snapshot of all tracked favorite file paths.
+    /// </summary>
+    public IReadOnlyCollection<string> GetAllFavorites()
+    {
+        return new List<string>(_favorites).AsReadOnly();
+    }
+
+    /// <summary>
+    /// Filters an input collection of <see cref="MediaItem"/> objects, returning only those
+    /// whose file paths are marked as favorites (FR8 favorites-only filter).
+    /// Preserves original playlist ordering.
+    /// </summary>
+    /// <param name="items">The playlist or candidate media items.</param>
+    /// <returns>A new list containing only the favorited media items.</returns>
+    public List<MediaItem> FilterFavorites(IEnumerable<MediaItem>? items)
+    {
+        var result = new List<MediaItem>();
+        if (items == null)
+            return result;
+
+        foreach (var item in items)
+        {
+            if (item != null && IsFavorite(item.FilePath))
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Alias for <see cref="FilterFavorites(IEnumerable{MediaItem}?)"/> matching the integration contract.
+    /// </summary>
+    public List<MediaItem> GetFavorites(IEnumerable<MediaItem>? items) => FilterFavorites(items);
+
+    /// <summary>
     /// Explicitly persists current favorites to the backing store.
     /// </summary>
     public void Save()
