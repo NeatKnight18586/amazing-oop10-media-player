@@ -17,6 +17,7 @@
     <Compile Include="..\..\app\MediaPlayerPrj\MediaItem.cs" Link="Linked\MediaItem.cs" />
     <Compile Include="..\..\app\MediaPlayerPrj\AudioItem.cs" Link="Linked\AudioItem.cs" />
     <Compile Include="..\..\app\MediaPlayerPrj\VideoItem.cs" Link="Linked\VideoItem.cs" />
+    <Compile Include="..\..\app\MediaPlayerPrj\LibraryStore.cs" Link="Linked\LibraryStore.cs" />
   </ItemGroup>
 
   <ItemGroup>
