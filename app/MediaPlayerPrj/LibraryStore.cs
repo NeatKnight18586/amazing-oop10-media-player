@@ -1,7 +1,33 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace mediaPlayerPrj;
+
+/// <summary>
+/// Encapsulates the result of loading a media library from file or stream (FR3, FR7).
+/// </summary>
+public sealed class LibraryLoadResult
+{
+    /// <summary>Successfully parsed media items.</summary>
+    public List<MediaItem> Items { get; }
+
+    /// <summary>Count of malformed or invalid lines skipped during loading.</summary>
+    public int SkippedLineCount { get; }
+
+    /// <summary>Total number of lines encountered in the source.</summary>
+    public int TotalLineCount { get; }
+
+    /// <summary>Initializes a new instance of <see cref="LibraryLoadResult"/>.</summary>
+    public LibraryLoadResult(List<MediaItem> items, int skippedLineCount, int totalLineCount)
+    {
+        Items = items ?? new List<MediaItem>();
+        SkippedLineCount = Math.Max(0, skippedLineCount);
+        TotalLineCount = Math.Max(0, totalLineCount);
+    }
+}
 
 /// <summary>
 /// Provides parsing and file I/O operations for the six-field media library (FR3, FR7).
@@ -10,6 +36,82 @@ namespace mediaPlayerPrj;
 public static class LibraryStore
 {
     public const int RequiredFieldCount = 6;
+    public const string DefaultFileName = "Library.txt";
+
+    /// <summary>
+    /// Loads media items from the specified file path, returning parsed items and the count of skipped corrupt lines.
+    /// If the file is genuinely missing (e.g., first run), returns an empty result without throwing (FR3, FR7).
+    /// If an existing file is inaccessible or unreadable due to permissions or locking, an exception is thrown.
+    /// </summary>
+    /// <param name="filePath">Target file path, or null/empty to use <see cref="DefaultFileName"/>.</param>
+    /// <returns>A <see cref="LibraryLoadResult"/> containing parsed media items and skipped line count.</returns>
+    /// <exception cref="UnauthorizedAccessException">Thrown when access to the existing file or directory is denied.</exception>
+    /// <exception cref="IOException">Thrown when the existing file is locked, in use, or cannot be read.</exception>
+    public static LibraryLoadResult Load(string? filePath = null)
+    {
+        string targetPath = string.IsNullOrWhiteSpace(filePath) ? DefaultFileName : filePath;
+
+        try
+        {
+            using var stream = new FileStream(targetPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return Load(reader);
+        }
+        catch (FileNotFoundException)
+        {
+            return new LibraryLoadResult(new List<MediaItem>(), 0, 0);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return new LibraryLoadResult(new List<MediaItem>(), 0, 0);
+        }
+    }
+
+    /// <summary>
+    /// Loads media items from the specified file path, outputting the count of skipped corrupt lines.
+    /// If the file does not exist, returns an empty list and sets skippedLineCount to 0 (FR3, FR7).
+    /// </summary>
+    /// <param name="filePath">Target file path, or null/empty to use <see cref="DefaultFileName"/>.</param>
+    /// <param name="skippedLineCount">The number of invalid/corrupt lines skipped during loading.</param>
+    /// <returns>A list of successfully parsed <see cref="MediaItem"/> objects.</returns>
+    public static List<MediaItem> Load(string? filePath, out int skippedLineCount)
+    {
+        var result = Load(filePath);
+        skippedLineCount = result.SkippedLineCount;
+        return result.Items;
+    }
+
+    /// <summary>
+    /// Loads media items from an open <see cref="TextReader"/>, counting skipped malformed lines.
+    /// </summary>
+    /// <param name="reader">The text reader containing library lines.</param>
+    /// <returns>A <see cref="LibraryLoadResult"/> containing parsed items and skipped line count.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="reader"/> is null.</exception>
+    public static LibraryLoadResult Load(TextReader reader)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+
+        var items = new List<MediaItem>();
+        int skippedCount = 0;
+        int totalLines = 0;
+
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            totalLines++;
+            var item = ParseLine(line);
+            if (item != null)
+            {
+                items.Add(item);
+            }
+            else
+            {
+                skippedCount++;
+            }
+        }
+
+        return new LibraryLoadResult(items, skippedCount, totalLines);
+    }
 
     /// <summary>
     /// Parses a single line from Library.txt into a concrete <see cref="MediaItem"/> subclass.
@@ -103,4 +205,3 @@ public static class LibraryStore
         return false;
     }
 }
-
