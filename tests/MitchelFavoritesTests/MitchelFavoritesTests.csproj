@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>MitchelFavoritesTests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+  </ItemGroup>
+  <!-- Link only the non-UI source files so tests build on any platform -->
+  <ItemGroup>
+    <Compile Include="../../app/MediaPlayerPrj/FavoritesStore.cs"   Link="FavoritesStore.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/FavoritesService.cs" Link="FavoritesService.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/MediaItem.cs"        Link="MediaItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/AudioItem.cs"      Link="AudioItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/VideoItem.cs"      Link="VideoItem.cs" />
+  </ItemGroup>
+</Project>
