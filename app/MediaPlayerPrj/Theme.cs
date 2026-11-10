@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace mediaPlayerPrj;
@@ -21,6 +22,12 @@ public static class Theme
 
     /// <summary>Secondary text such as the status line.</summary>
     public static readonly Color MutedText = Color.FromArgb(78, 84, 96);
+
+    /// <summary>Border of buttons and other outlined controls.</summary>
+    public static readonly Color Border = Color.FromArgb(176, 184, 196);
+
+    /// <summary>Button background while the mouse is over it.</summary>
+    public static readonly Color Hover = Color.FromArgb(228, 240, 237);
 
     /// <summary>Color for actionable error messages (contrast about 7:1 on Background).</summary>
     public static readonly Color Error = Color.FromArgb(160, 28, 28);
@@ -64,6 +71,56 @@ public static class Theme
         foreach (Control child in root.Controls) ApplyToChild(child, skip);
     }
 
+    /// <summary>
+    /// Flat button style with a visible border and hover color. Unlike
+    /// <see cref="FlatStyle.System"/>, a flat button can display an icon.
+    /// </summary>
+    /// <param name="button">Button to style.</param>
+    public static void StyleButton(Button button)
+    {
+        ArgumentNullException.ThrowIfNull(button);
+        button.FlatStyle = FlatStyle.Flat;
+        button.UseVisualStyleBackColor = false;
+        button.BackColor = Surface;
+        button.ForeColor = Text;
+        button.FlatAppearance.BorderColor = Border;
+        button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.MouseOverBackColor = Hover;
+        button.FlatAppearance.MouseDownBackColor = Border;
+        button.Cursor = Cursors.Hand;
+    }
+
+    /// <summary>
+    /// Loads <c>Assets/icons/&lt;name&gt;.png</c> from the application folder, scaled to a
+    /// square of <paramref name="pixels"/>. Returns null (never throws) when the
+    /// file is missing or unreadable so callers can fall back to a text-only button.
+    /// </summary>
+    /// <param name="name">Icon file name without extension, e.g. "play".</param>
+    /// <param name="pixels">Target width and height in device pixels.</param>
+    public static Image? LoadIcon(string name, int pixels)
+    {
+        if (string.IsNullOrWhiteSpace(name) || pixels <= 0) return null;
+
+        try
+        {
+            string path = Path.Combine(AppContext.BaseDirectory, "Assets", "icons", name + ".png");
+            if (!File.Exists(path)) return null;
+
+            using var source = Image.FromFile(path);
+            var scaled = new Bitmap(pixels, pixels);
+            using var g = Graphics.FromImage(scaled);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            g.DrawImage(source, 0, 0, pixels, pixels);
+            return scaled;
+        }
+        catch (Exception ex) when (ex is IOException or OutOfMemoryException
+            or ArgumentException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     private static void ApplyToChild(Control control, Control? skip)
     {
         if (ReferenceEquals(control, skip))
@@ -75,8 +132,7 @@ public static class Theme
         switch (control)
         {
             case Button button:
-                button.FlatStyle = FlatStyle.System;
-                button.Height = ControlHeight;
+                StyleButton(button);
                 break;
             case ListView list:
                 list.BackColor = Surface;

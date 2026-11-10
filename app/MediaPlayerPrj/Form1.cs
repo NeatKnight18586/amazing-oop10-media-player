@@ -18,6 +18,7 @@ public class Form1 : BasePlayerForm
     private readonly Label _nowPlaying = new();
     private readonly Label _nowDetail = new();
     private string _playState = "Ready";
+    private readonly List<(Button Button, string IconName)> _iconButtons = new();
     private readonly Label _elapsed = new();
     private readonly Label _status = new();
     private readonly Panel _videoHost = new();
@@ -136,12 +137,12 @@ public class Form1 : BasePlayerForm
         };
         layout.Controls.Add(controls, 0, 3);
 
-        controls.Controls.Add(MakeButton("Add MP3/MP4", async () => await AddFromDialogAsync()));
-        controls.Controls.Add(MakeButton("Play", PlaySelected));
-        controls.Controls.Add(MakeButton("Pause", Pause));
-        controls.Controls.Add(MakeButton("Stop", Stop));
-        controls.Controls.Add(MakeButton("Prev", Previous));
-        controls.Controls.Add(MakeButton("Next", Next));
+        controls.Controls.Add(MakeButton("Add MP3/MP4", "add", async () => await AddFromDialogAsync()));
+        controls.Controls.Add(MakeButton("Play", "play", PlaySelected));
+        controls.Controls.Add(MakeButton("Pause", "pause", Pause));
+        controls.Controls.Add(MakeButton("Stop", "stop", Stop));
+        controls.Controls.Add(MakeButton("Prev", "prev", Previous));
+        controls.Controls.Add(MakeButton("Next", "next", Next));
 
         var volume = new TrackBar
         {
@@ -197,17 +198,43 @@ public class Form1 : BasePlayerForm
         return item;
     }
 
-    private static Button MakeButton(string title, Action action)
+    private Button MakeButton(string title, string iconName, Action action)
     {
         var button = new Button
         {
             Text = title,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            MinimumSize = new Size(0, Theme.ControlHeight)
+            MinimumSize = new Size(0, Theme.ControlHeight),
+            ImageAlign = ContentAlignment.MiddleLeft,
+            TextImageRelation = TextImageRelation.ImageBeforeText,
+            Padding = new Padding(6, 0, 6, 0)
         };
         button.Click += (_, _) => action();
+        _iconButtons.Add((button, iconName));
         return button;
+    }
+
+    /// <summary>
+    /// Sets each button's icon at the current DPI. A missing icon file leaves the
+    /// button text-only so the player stays fully usable without assets.
+    /// </summary>
+    private void ApplyButtonIcons()
+    {
+        int size = LogicalToDeviceUnits(18);
+        foreach (var (button, iconName) in _iconButtons)
+        {
+            Image? old = button.Image;
+            button.Image = Theme.LoadIcon(iconName, size);
+            old?.Dispose();
+        }
+    }
+
+    /// <inheritdoc/>
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+        ApplyButtonIcons();
     }
 
     private async Task AddFromDialogAsync()
@@ -407,6 +434,7 @@ public class Form1 : BasePlayerForm
     protected override void ApplyTheme()
     {
         Theme.Apply(this, _videoHost);
+        ApplyButtonIcons();
         _nowPlaying.Font = Theme.Emphasis;
         _nowDetail.ForeColor = Theme.MutedText;
         _elapsed.Font = Theme.Clock;
