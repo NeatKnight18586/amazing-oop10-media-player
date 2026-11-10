@@ -307,6 +307,27 @@ public partial class Form1 : BasePlayerForm
         SetStatus(label);
     }
 
+    /// <summary>
+    /// Prepares the native video panel before LibVLC receives the Play command.
+    /// The cassette art remains visible for audio tracks.
+    /// </summary>
+    public override void Play()
+    {
+        if (CurrentIndex >= 0 && CurrentIndex < Playlist.Count)
+        {
+            bool video = Playlist[CurrentIndex] is VideoItem;
+            pnlVideo.Visible = video;
+            if (video)
+            {
+                pnlVideo.BringToFront();
+                _ = pnlVideo.Handle;
+                if (VideoSurface != null)
+                    _ = VideoSurface.Handle;
+            }
+        }
+        base.Play();
+    }
+
     /// <inheritdoc/>
     public override void Next()
     {
