@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+  <defs>
+    <linearGradient id="paper" x2="0" y2="1">
+      <stop offset="0" stop-color="#eed09a"/>
+      <stop offset="1" stop-color="#ca9155"/>
+    </linearGradient>
+    <linearGradient id="brown" x2="0" y2="1">
+      <stop offset="0" stop-color="#55321f"/>
+      <stop offset="1" stop-color="#26170f"/>
+    </linearGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".19" numOctaves="2" seed="7" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope=".11"/>
+      </feComponentTransfer>
+    </filter>
+    <style>
+      .ink{fill:#3c281d;font-family:'Segoe UI',Arial,sans-serif}
+      .label{font-size:22px;font-weight:600}
+      .minor{font-size:16px}
+      .cap{font-family:Georgia,serif;font-style:italic;font-size:32px;fill:#453423}
+      .stroke{stroke:#71462a;stroke-width:4}
+      .btn{fill:#e2b572;stroke:#6d472b;stroke-width:3}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1280" height="800" fill="#f8efe0"/>
+  <text x="54" y="58" class="ink" font-size="34" font-weight="700">AMAZING PLAYER</text>
+  <text x="54" y="89" class="ink" font-size="20">OOP10 · BSCS2A · Group 1 — Design layout / concept</text>
+  <rect x="42" y="116" width="1196" height="620" rx="30" fill="url(#paper)" stroke="#79512c" stroke-width="8"/>
+  <rect x="58" y="132" width="1164" height="48" fill="#edcf9b" stroke="#8d5d37"/>
+  <text x="80" y="163" class="ink" font-size="20">File       Playback       Library       Help</text>
+  <text x="1145" y="163" class="ink minor" text-anchor="end">MenuStrip</text>
+  <rect x="67" y="195" width="692" height="370" rx="18" fill="url(#brown)" stroke="#aa713b" stroke-width="7"/>
+  <rect x="93" y="225" width="640" height="316" rx="12" fill="#5a3523" stroke="#d5a064" stroke-width="4"/>
+  <rect x="125" y="245" width="570" height="250" rx="14" fill="#e9b979" stroke="#9f623d" stroke-width="8"/>
+  <rect x="145" y="261" width="530" height="67" fill="#eecd98"/>
+  <text x="410" y="306" class="cap" text-anchor="middle">Current Song Title</text>
+  <rect x="145" y="339" width="530" height="11" fill="#a63228"/>
+  <rect x="145" y="355" width="530" height="7" fill="#bd382a"/>
+  <rect x="145" y="368" width="530" height="7" fill="#bd382a"/>
+  <rect x="236" y="383" width="346" height="92" rx="9" fill="#291b19" stroke="#ad7341" stroke-width="5"/>
+  <circle cx="303" cy="428" r="35" fill="#a4774c" stroke="#25160f" stroke-width="8"/>
+  <circle cx="516" cy="428" r="35" fill="#a4774c" stroke="#25160f" stroke-width="8"/>
+  <circle cx="303" cy="428" r="10" fill="#2d1f17"/>
+  <circle cx="516" cy="428" r="10" fill="#2d1f17"/>
+  <text x="91" y="594" class="ink label">NOW PLAYING</text>
+  <text x="91" y="623" class="ink minor">Artist · Album     |     Elapsed / Duration</text>
+  <rect x="773" y="195" width="432" height="370" rx="16" fill="#f2d6a4" stroke="#865532" stroke-width="6"/>
+  <text x="800" y="231" class="ink label">Playlist / Next Songs</text>
+  <line x1="794" x2="1185" y1="246" y2="246" stroke="#92603e" stroke-width="3"/>
+  <text x="803" y="275" class="ink minor" font-weight="600">Title                         Artist               Time</text>
+  <line x1="797" x2="1181" y1="288" y2="288" stroke="#a8794e"/>
+  <g stroke="#b58d64" stroke-width="1.5">
+    <line x1="797" x2="1181" y1="322" y2="322"/>
+    <line x1="797" x2="1181" y1="365" y2="365"/>
+    <line x1="797" x2="1181" y1="408" y2="408"/>
+    <line x1="797" x2="1181" y1="451" y2="451"/>
+    <line x1="797" x2="1181" y1="494" y2="494"/>
+    <line x1="797" x2="1181" y1="537" y2="537"/>
+  </g>
+  <text x="800" y="556" class="ink minor">Search · Sort · Favorites only</text>
+  <rect x="75" y="584" width="1125" height="75" rx="10" fill="#b88950" stroke="#654228" stroke-width="4"/>
+  <g class="ink" text-anchor="middle" font-size="17" font-weight="700">
+    <rect class="btn" x="91" y="594" width="109" height="53" rx="8"/><text x="145" y="628">Prev</text>
+    <rect class="btn" x="206" y="594" width="109" height="53" rx="8"/><text x="260" y="628">Play</text>
+    <rect class="btn" x="321" y="594" width="109" height="53" rx="8"/><text x="375" y="628">Pause</text>
+    <rect class="btn" x="436" y="594" width="109" height="53" rx="8"/><text x="490" y="628">Stop</text>
+    <rect class="btn" x="551" y="594" width="109" height="53" rx="8"/><text x="605" y="628">Next</text>
+    <rect class="btn" x="666" y="594" width="109" height="53" rx="8"/><text x="720" y="628">Add</text>
+    <rect class="btn" x="781" y="594" width="117" height="53" rx="8"/><text x="839" y="628">Favorite</text>
+    <rect class="btn" x="904" y="594" width="130" height="53" rx="8"/><text x="969" y="628">Shuffle</text>
+    <rect class="btn" x="1040" y="594" width="147" height="53" rx="8"/><text x="1113" y="628">Repeat</text>
+  </g>
+  <text x="92" y="696" class="ink minor">Seek ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+  <text x="680" y="696" class="ink minor">0:00 / 0:00     Volume ━━━━━━━━━</text>
+  <rect x="42" y="116" width="1196" height="620" rx="30" fill="#fff" filter="url(#grain)" pointer-events="none"/>
+  <text x="54" y="777" class="ink minor">Original cassette-inspired layout · WinForms Designer controls remain separate and editable · Planning sketch (not an application screenshot)</text>
+</svg>
