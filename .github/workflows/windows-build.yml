@@ -33,6 +33,14 @@ jobs:
         run: dotnet test tests/MitchelFavoritesTests/MitchelFavoritesTests.csproj --configuration Release --verbosity minimal
       - name: Check Windows Forms startup and controls
         run: dotnet run --project tests/WinFormsSmoke/WinFormsSmoke.csproj --configuration Release
+      - name: Upload WinForms layout captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AmazingPlayer-WinForms-layout
+          path: ui-captures/*.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Publish self-contained win-x64
         run: dotnet publish app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --runtime win-x64 --self-contained true --output publish/AmazingPlayer -p:PublishSingleFile=false -p:PublishTrimmed=false
       - name: Verify publish content

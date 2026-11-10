@@ -1,4 +1,7 @@
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using mediaPlayerPrj;
@@ -22,6 +25,7 @@ internal static class Program
                 for (int index = 1; index <= 5; index++)
                     Require(splash.Controls.Find("picMember" + index, true).Length == 1,
                         "Member photo card " + index);
+                CaptureIfPossible(splash, "splash.png");
             }
 
             using (var form = new Form1())
@@ -35,6 +39,7 @@ internal static class Program
                 Require(form.Controls.Find("btnRepeat", true).Length == 1, "Repeat button");
                 Require(form.Controls.Find("trkSeek", true).Length == 1, "Seek bar");
                 Require(form.Controls.Find("trkVolume", true).Length == 1, "Volume control");
+                CaptureIfPossible(form, "main-window.png");
             }
 
             Console.WriteLine("PASS: Main and splash forms constructed; required named WinForms controls present.");
@@ -45,6 +50,26 @@ internal static class Program
             Console.Error.WriteLine("FAIL: Windows Forms startup check.");
             Console.Error.WriteLine(ex);
             return 1;
+        }
+    }
+
+    private static void CaptureIfPossible(Form form, string filename)
+    {
+        try
+        {
+            form.Show();
+            Application.DoEvents();
+            using var bitmap = new Bitmap(form.Width, form.Height);
+            form.DrawToBitmap(bitmap, new Rectangle(Point.Empty, form.Size));
+            string output = Path.Combine(Environment.CurrentDirectory, "ui-captures");
+            Directory.CreateDirectory(output);
+            bitmap.Save(Path.Combine(output, filename), ImageFormat.Png);
+            form.Hide();
+            Console.WriteLine("Captured " + filename);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Layout screenshot unavailable in this Windows session: " + ex.Message);
         }
     }
 
