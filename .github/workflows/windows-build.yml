@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'app/**'
+      - 'tests/**'
       - '.github/workflows/windows-build.yml'
   pull_request:
     paths:
@@ -22,6 +23,24 @@ jobs:
         run: dotnet restore app/MediaPlayerPrj/MediaPlayerPrj.csproj
       - name: Build
         run: dotnet build app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --no-restore
+      - name: Check Visual Studio solution
+        run: dotnet build AmazingPlayer.sln --configuration Release --no-restore
+      - name: Verify library persistence and sorting
+        run: dotnet test tests/LibraryTests/LibraryTests.csproj --configuration Release --verbosity minimal
+      - name: Verify playback modes
+        run: dotnet test tests/PlaybackModes.Tests/PlaybackModes.Tests.csproj --configuration Release --verbosity minimal
+      - name: Verify favorites
+        run: dotnet test tests/MitchelFavoritesTests/MitchelFavoritesTests.csproj --configuration Release --verbosity minimal
+      - name: Check Windows Forms startup and controls
+        run: dotnet run --project tests/WinFormsSmoke/WinFormsSmoke.csproj --configuration Release
+      - name: Upload WinForms layout captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AmazingPlayer-WinForms-layout
+          path: ui-captures/*.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Publish self-contained win-x64
         run: dotnet publish app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --runtime win-x64 --self-contained true --output publish/AmazingPlayer -p:PublishSingleFile=false -p:PublishTrimmed=false
       - name: Verify publish content
@@ -29,10 +48,18 @@ jobs:
         run: |
           if (-not (Test-Path "publish/AmazingPlayer/MediaPlayerPrj.exe")) { throw "MediaPlayerPrj.exe missing" }
           Get-ChildItem "publish/AmazingPlayer" | Select-Object Name
+      - name: Verify skin assets in published app
+        shell: pwsh
+        run: |
+          $required = @("cassette_art.png", "paper_texture.png", "logo.png", "logo.ico")
+          foreach ($asset in $required) {
+            $path = Join-Path "publish/AmazingPlayer/Assets" $asset
+            if (-not (Test-Path $path)) { throw "Missing original asset: $asset" }
+          }
       - name: Upload standalone test package
         uses: actions/upload-artifact@v4
         with:
-          name: AmazingPlayer-bootstrap-win-x64-self-contained
+          name: AmazingPlayer-integration-win-x64-self-contained
           path: publish/AmazingPlayer/
           if-no-files-found: error
           retention-days: 7
