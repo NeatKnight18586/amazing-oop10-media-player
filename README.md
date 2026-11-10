@@ -1,41 +1,68 @@
-# Amazing Player — OOP10
+# Amazing Player
+**OOP10 Final Project — BSCS2A, Group 1: Amazing**
 
-**BSCS2A · Group 1 · Amazing**  
-Cango, Darrel · Garcia, Chris · Guevarra, Mark · Mirador, Shanen · Susi, Mitchel
+A Windows Forms application that imports local MP3 and MP4 files, maintains a media library, and plays them using LibVLCSharp. The interface uses a cassette-inspired design with an editable Windows Forms layout.
 
-A collaborative **C# Windows Forms** MP3/MP4 media player using LibVLCSharp. The application foundation was **reconstructed from the instructor's posted MediaPlayerPrj sample and final 21-page PDF guide**; it is not a byte-for-byte copy of an instructor-supplied Visual Studio project.
+**Members:** Darrel Cango, Chris Garcia, Mark Guevarra, Shanen Mirador, Mitchel Susi.
 
-> **Current state (Nov 8, 2026): runnable bootstrap merged into `main` via [PR #8](https://github.com/NeatKnight18586/amazing-oop10-media-player/pull/8). GitHub Windows CI build and self-contained publish succeeded; Mark reports MP3, MP4, buttons, elapsed counter and closing work on a Windows PC.** This is a manual smoke-test report, not the final 15-case test report. See [baseline record](docs/BASELINE_VERIFICATION.md).
+## Project status
 
-## App
+The November 10 M1–M3 implementation is under review in [PR #11](https://github.com/NeatKnight18586/amazing-oop10-media-player/pull/11). It builds and publishes on GitHub's Windows runner. The automated suites contain **163 passing tests** (library: 6, playback policy: 88, Favorites: 69). A Windows desktop visual check of the new Designer layout and integrated media controls is still required before final approval.
 
-Open `app/MediaPlayerPrj/MediaPlayerPrj.csproj` in Visual Studio 2022/2026 with the .NET desktop development workload, restore dependencies and press F5. Current form is a **temporary programmatic WinForms interface**; an original skin and the other required features still need implementing.
+| Milestone | Work |
+|---|---|
+| M1 — Analysis and design | Requirements, use-case/class/sequence diagrams, cassette-inspired design concept |
+| M2 — Core logic | MediaItem hierarchy, LibraryStore text persistence, exception handling, file import and unit tests |
+| M3 — Player and skin | Form1 inherited from BasePlayerForm, designer-backed controls, original cassette assets, splash screen, menus, elapsed clock, insertion sort, shuffle/repeat and Favorites |
 
-## Confirmed decisions
+## Open in Visual Studio
 
-- Section **BSCS2A**, **Group 1**, team **Amazing**; working title **Amazing Player**.
-- **FR8:** Favorites / Liked Songs, persisted separately from the required six-field `Library.txt`.
-- **FR12:** hand-written **insertion sort** by Title and Artist, keeping the current item.
-- Original minimalist PNG skin inside the project `Assets/`; standard Windows border by default.
-- C# Windows Forms + LibVLCSharp, using instructor OOP hierarchy.
+Open `AmazingPlayer.sln` or `app/MediaPlayerPrj/MediaPlayerPrj.csproj` using Visual Studio 2022/2026 with **.NET desktop development** installed. Restore packages if prompted, then press F5. The target is .NET 8 Windows x64.
 
-## Work together safely
+To adjust the interface graphically, right-click `Form1.cs` or `SplashForm.cs` in Solution Explorer and choose **View Designer**. Their controls are defined in matching `.Designer.cs` and `.resx` files; playback logic stays in separate class files. Skin graphics are loaded from `app/MediaPlayerPrj/Assets/`.
 
-1. Read [START_HERE.md](START_HERE.md), [AGENTS.md](AGENTS.md), [PRD](docs/PRD.md), and [integration contract](docs/INTEGRATION_CONTRACT.md).
-2. Consult [team responsibilities](docs/WORKSTREAM_ASSIGNMENTS.md) and [phases](docs/PHASE_PLAN.md). Open your designated [GitHub issue](https://github.com/NeatKnight18586/amazing-oop10-media-player/issues).
-3. Work in your own feature branch; modify only your assigned files; review your AI's changes; commit real work under your own account; push and open a PR.
-4. Lead reviews, merges and reruns the Windows build; UI/asset changes require a real Windows smoke test.
+The repository follows the professor's posted MediaPlayerPrj example and the final OOP10 requirement guide. The file format for new library records follows the final guide:
+`Type|Title|Artist|HH:MM:SS|FilePath|AlbumOrResolution`.
 
-## Still to deliver
+## Main features
 
-Six-field `Library.txt` load/save, resolution metadata, sorting, shuffle/repeat, Favorites, final skin and splash screen, actual UML, >=15 executed tests, bug log, manual, deployment on **another** Windows PC, recorded demo, portfolio PDF, and final ZIP.
+- Add MP3 and MP4 files using a file dialog; view metadata and the playlist.
+- Play, Pause, Stop, Next, Previous, volume and seek.
+- Automatically save and reload `Library.txt`; skip damaged records.
+- Search the playlist; hand-written insertion sort by title and artist.
+- Shuffle and Repeat Off/All/One with automatic media-end behavior.
+- Mark tracks as Favorites and filter the library by liked songs.
+- Splash screen with group information and member-photo placeholders.
+- Retro cassette skin with separate playlist, menus, clock and video surface.
 
-**Instructor deadlines:** M1–M3 Nov 10, M4 Nov 12, M5 Nov 14, 2026. At least 10 **meaningful contributions committed by each member** (50+ genuine commits total). Invite the instructor to the **private** repository.
+## Source organization
 
-**Privacy alert:** GitHub reported this repository as **PUBLIC** on Nov 8 despite the guide requiring private. Repository owner must change Settings → General → Danger Zone → Change repository visibility → Private before sharing portraits or other sensitive materials.
+| Directory / file | Purpose |
+|---|---|
+| `app/MediaPlayerPrj/Form1.Designer.cs` | Editable main-window controls and positions |
+| `app/MediaPlayerPrj/SplashForm.Designer.cs` | Editable splash layout |
+| `app/MediaPlayerPrj/BasePlayerForm.cs` | LibVLC playback functionality |
+| `app/MediaPlayerPrj/LibraryStore.cs` | Read/write local library |
+| `app/MediaPlayerPrj/LibrarySorter.cs` | Insertion sort |
+| `app/MediaPlayerPrj/PlaybackOrder.cs` | Shuffle/repeat decisions |
+| `app/MediaPlayerPrj/FavoritesService.cs` | Favorites logic |
+| `app/MediaPlayerPrj/Assets/` | Application artwork and team photos |
+| `tests/` | Automated unit tests |
+| `docs/milestones/M1/` | Requirements and UML/design material |
 
-## Submission
+## Build and tests
 
-GitHub repository link, `G1_BSCS2A_Portfolio.pdf`, `G1_BSCS2A_Release.zip`, recorded demonstration, design source/credits and evidence. Do not commit copied commercial media, secrets, personal contact data, runtime `Library.txt`/`Favorites.txt`, `bin/`, `obj/`, or publish output.
+```powershell
+dotnet build AmazingPlayer.sln -c Release
+dotnet test tests/LibraryTests/LibraryTests.csproj -c Release
+dotnet test tests/PlaybackModes.Tests/PlaybackModes.Tests.csproj -c Release
+dotnet test tests/MitchelFavoritesTests/MitchelFavoritesTests.csproj -c Release
+```
 
-**Instructor basis:** 21-page OOP10 final project guide + the professor's direct sample code. Source comparison: [docs/INSTRUCTOR_SAMPLE_RECONCILIATION.md](docs/INSTRUCTOR_SAMPLE_RECONCILIATION.md).
+CI runs these tests and publishes a self-contained win-x64 ZIP. The executable and native VLC libraries must be distributed together. See [deployment checklist](docs/DEPLOYMENT_CHECKLIST.md).
+
+## Required final checks
+
+Open both forms in Visual Studio Designer, test MP3 and MP4 playback, verify persistent Library/Favorites across restart, inspect sizing at 100% and 125%, and capture screenshots. Replace missing member portraits with the actual photos (with permission), retain the editable original artwork source and credits, and test the final ZIP on a second Windows PC.
+
+The course requires a **private** GitHub repository, instructor/member access, genuine individual commits, milestone logs and the final PDF portfolio.
