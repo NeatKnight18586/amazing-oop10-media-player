@@ -54,7 +54,45 @@ public class FavoritesStore
         if (!File.Exists(_filePath))
             return favorites;
 
-        // Stub — full line-by-line parsing added in increment 2–3.
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(_filePath);
+        }
+        catch (IOException ex)
+        {
+            throw new FavoritesIOException(
+                "Could not read favorites file: " + _filePath, ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new FavoritesIOException(
+                "Access denied reading favorites file: " + _filePath, ex);
+        }
+
+        foreach (string raw in lines)
+        {
+            // Skip blank and whitespace-only lines.
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                skippedCount++;
+                continue;
+            }
+
+            string? normalized = NormalizePath(raw);
+            if (normalized == null)
+            {
+                // Line contains invalid path characters.
+                skippedCount++;
+                continue;
+            }
+
+            // Duplicates are silently absorbed by the HashSet;
+            // count them so callers can report if desired.
+            if (!favorites.Add(normalized))
+                skippedCount++;
+        }
+
         return favorites;
     }
 

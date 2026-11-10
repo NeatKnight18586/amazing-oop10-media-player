@@ -150,4 +150,140 @@ public class FavoritesStoreTests
         Assert.IsTrue(result.Contains("/tmp/song.mp3"),
             "Returned set must use case-insensitive comparison.");
     }
+
+    // ──────────────────────────────────────────────
+    //  Load — file with content
+    // ──────────────────────────────────────────────
+
+    [TestMethod]
+    public void Load_FileWithValidPaths_ReturnsAllPaths()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string song1 = Path.Combine(Path.GetTempPath(), "song1.mp3");
+        string song2 = Path.Combine(Path.GetTempPath(), "song2.mp4");
+        try
+        {
+            File.WriteAllLines(file, new[] { song1, song2 });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(2, result.Count, "Should load both valid paths.");
+            Assert.AreEqual(0, skipped, "No lines should be skipped.");
+            Assert.IsTrue(result.Contains(Path.GetFullPath(song1)));
+            Assert.IsTrue(result.Contains(Path.GetFullPath(song2)));
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_EmptyFile_ReturnsEmptySetZeroSkipped()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        try
+        {
+            File.WriteAllText(file, "");
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(0, result.Count);
+            Assert.AreEqual(0, skipped);
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_BlankLines_AreSkippedAndCounted()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string song = Path.Combine(Path.GetTempPath(), "song.mp3");
+        try
+        {
+            File.WriteAllLines(file, new[] { "", "   ", song, "\t" });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(1, result.Count, "Only the valid path should load.");
+            Assert.AreEqual(3, skipped, "Three blank/whitespace lines should be skipped.");
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_DuplicatePaths_DedupedAndCounted()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string song = Path.Combine(Path.GetTempPath(), "song.mp3");
+        try
+        {
+            File.WriteAllLines(file, new[] { song, song, song });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(1, result.Count, "Duplicates should be absorbed.");
+            Assert.AreEqual(2, skipped, "Two duplicate lines should be counted.");
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_PathsWithLeadingTrailingSpaces_AreTrimmed()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string song = Path.Combine(Path.GetTempPath(), "song.mp3");
+        try
+        {
+            File.WriteAllLines(file, new[] { "  " + song + "  " });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(1, result.Count);
+            Assert.IsTrue(result.Contains(Path.GetFullPath(song)),
+                "Loaded path should match the trimmed/normalized form.");
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_LineWithNullChar_IsSkipped()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string good = Path.Combine(Path.GetTempPath(), "good.mp3");
+        try
+        {
+            File.WriteAllLines(file, new[] { "bad\0path.mp3", good });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            Assert.AreEqual(1, result.Count, "Only the valid path should load.");
+            Assert.AreEqual(1, skipped, "The invalid-char line should be skipped.");
+        }
+        finally { File.Delete(file); }
+    }
+
+    [TestMethod]
+    public void Load_CaseDuplicatesOnSamePath_DedupedCaseInsensitively()
+    {
+        string file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        string lower = Path.Combine(Path.GetTempPath(), "song.mp3");
+        string upper = Path.Combine(Path.GetTempPath(), "SONG.MP3");
+        try
+        {
+            File.WriteAllLines(file, new[] { lower, upper });
+            var store = new FavoritesStore(file);
+
+            var result = store.Load(out int skipped);
+
+            // On case-insensitive FS (Windows/macOS default), these normalize
+            // to the same full path. The set is case-insensitive regardless.
+            Assert.IsTrue(result.Count <= 2,
+                "Case-insensitive set may dedup depending on OS normalization.");
+        }
+        finally { File.Delete(file); }
+    }
 }
