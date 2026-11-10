@@ -131,9 +131,7 @@ public partial class Form1 : BasePlayerForm
                     Playlist.Add(item);
                     added++;
                 }
-                catch (Exception ex) when (ex is IOException ||
-                                           ex is NotSupportedException ||
-                                           ex is InvalidOperationException)
+                catch (Exception ex)
                 {
                     failed++;
                     SetStatus("Skipped " + Path.GetFileName(filePath) + ": " + ex.Message);
@@ -405,15 +403,9 @@ public partial class Form1 : BasePlayerForm
         if (cassette != null)
             pnlCassette.BackgroundImage = cassette;
         pnlCassette.BackgroundImageLayout = ImageLayout.Stretch;
-        Image? logo = Theme.LoadImage("logo.png");
-        if (logo != null)
-        {
-            using (logo)
-            {
-                Icon? appIcon = Theme.TryLoadIcon("logo.ico");
-                if (appIcon != null) Icon = appIcon;
-            }
-        }
+        Icon? appIcon = Theme.TryLoadIcon("logo.ico");
+        if (appIcon != null)
+            Icon = appIcon;
     }
 
     /// <inheritdoc/>

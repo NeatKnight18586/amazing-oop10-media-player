@@ -182,6 +182,7 @@ public partial class Form1
         splitMain.Dock = DockStyle.Fill;
         splitMain.BackColor = Color.FromArgb(124, 75, 38);
         splitMain.Orientation = Orientation.Vertical;
+        splitMain.Size = new Size(1120, 500);
         splitMain.SplitterWidth = 7;
         splitMain.SplitterDistance = 728;
         splitMain.Panel1.BackColor = Color.FromArgb(238, 200, 147);
