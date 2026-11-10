@@ -273,4 +273,104 @@ public class FavoritesServiceTests
         Assert.AreEqual(1, added, "Only p2 should be added as new unique.");
         Assert.AreEqual(2, _service.Count);
     }
+
+    [TestMethod]
+    public void Persistence_SecondServiceInstance_LoadsSavedFavoritesAcrossRestart()
+    {
+        string p1 = Path.Combine(Path.GetTempPath(), "persist1.mp3");
+        string p2 = Path.Combine(Path.GetTempPath(), "persist2.mp4");
+        _service.Add(p1);
+        _service.Add(p2);
+
+        // Simulate app restart by instantiating a new service connected to same file
+        var secondService = new FavoritesService(_store);
+
+        Assert.AreEqual(2, secondService.Count);
+        Assert.IsTrue(secondService.IsFavorite(p1));
+        Assert.IsTrue(secondService.IsFavorite(p2));
+    }
+
+    [TestMethod]
+    public void Toggle_Repeatedly_AlternatesStateAndPersists()
+    {
+        string p = Path.Combine(Path.GetTempPath(), "alternate.mp3");
+
+        Assert.IsTrue(_service.Toggle(p), "1st toggle: added -> true");
+        Assert.IsFalse(_service.Toggle(p), "2nd toggle: removed -> false");
+        Assert.IsTrue(_service.Toggle(p), "3rd toggle: added -> true");
+
+        // Verify backing store
+        var fresh = new FavoritesService(_store);
+        Assert.IsTrue(fresh.IsFavorite(p));
+    }
+
+    [TestMethod]
+    public void Reload_ReflectsExternalModifications()
+    {
+        string externalPath = Path.Combine(Path.GetTempPath(), "external.mp3");
+        File.WriteAllLines(_tempFilePath, new[] { externalPath });
+
+        _service.Reload();
+
+        Assert.AreEqual(1, _service.Count);
+        Assert.IsTrue(_service.IsFavorite(externalPath));
+    }
+
+    [TestMethod]
+    public void LastSkippedCount_ReflectsStoreSkippedLinesOnStartup()
+    {
+        string validPath = Path.Combine(Path.GetTempPath(), "good.mp3");
+        File.WriteAllLines(_tempFilePath, new[] { validPath, "   ", validPath, "invalid\0path" });
+
+        var freshService = new FavoritesService(_store);
+
+        Assert.AreEqual(1, freshService.Count);
+        Assert.AreEqual(3, freshService.LastSkippedCount, "Blank, duplicate, and null-char lines skipped.");
+    }
+
+    [TestMethod]
+    public void FilterFavorites_HandlesMixedMediaAndInvalidItemPaths()
+    {
+        string validFav = Path.Combine(Path.GetTempPath(), "validFav.mp3");
+        _service.Add(validFav);
+
+        var itemGood = new AudioItem("Good", "Artist", TimeSpan.FromMinutes(3), validFav, "Album");
+        var itemBlankPath = new AudioItem("Blank", "Artist", TimeSpan.FromMinutes(2), "", "Album");
+        var itemNullPath = new AudioItem("Null", "Artist", TimeSpan.FromMinutes(2), null!, "Album");
+        var itemInvalidPath = new VideoItem("Bad", "Artist", TimeSpan.FromMinutes(2), "bad\0path.mp4", "1080p");
+
+        var list = new List<MediaItem> { itemGood, itemBlankPath, itemNullPath, itemInvalidPath };
+        var filtered = _service.FilterFavorites(list);
+
+        Assert.AreEqual(1, filtered.Count);
+        Assert.AreSame(itemGood, filtered[0]);
+    }
+
+    [TestMethod]
+    public void PathMatching_RelativeAndAbsoluteVariants_MatchConsistently()
+    {
+        string relative = "relative_track.mp3";
+        string absolute = Path.GetFullPath(relative);
+
+        _service.Add(relative);
+
+        Assert.IsTrue(_service.IsFavorite(absolute), "Querying with absolute should match relative added path.");
+        Assert.IsTrue(_service.IsFavorite(relative), "Querying with relative should match.");
+    }
+
+    [TestMethod]
+    public void Remove_ThenAddAgain_ReEnablesFavorite()
+    {
+        string p = Path.Combine(Path.GetTempPath(), "lifecycle.mp3");
+
+        _service.Add(p);
+        Assert.IsTrue(_service.IsFavorite(p));
+
+        _service.Remove(p);
+        Assert.IsFalse(_service.IsFavorite(p));
+
+        _service.Add(p);
+        Assert.IsTrue(_service.IsFavorite(p));
+        Assert.AreEqual(1, _service.Count);
+    }
 }
