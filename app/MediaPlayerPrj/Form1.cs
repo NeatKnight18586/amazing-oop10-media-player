@@ -2,301 +2,425 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace mediaPlayerPrj;
 
-/// <summary>
-/// Temporary code-built WinForms UI because the instructor's Form1.Designer.cs
-/// was not provided. Shanen will replace the visuals with the original skin.
-/// </summary>
-public class Form1 : BasePlayerForm
+/// <summary>Main player window, using controls created by the Windows Forms Designer.</summary>
+public partial class Form1 : BasePlayerForm
 {
-    private readonly ListView _playlistView = new();
-    private readonly Label _nowPlaying = new();
-    private readonly Label _elapsed = new();
-    private readonly Label _status = new();
-    private readonly Panel _videoHost = new();
-    private readonly System.Windows.Forms.Timer _clock = new() { Interval = 500 };
-    private readonly HashSet<string> _extensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".mp3", ".mp4"
-    };
-    private bool _importBusy;
+    private readonly PlaybackOrder _playbackOrder = new();
+    private readonly HashSet<string> _extensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".mp3", ".mp4" };
+    private readonly System.Windows.Forms.Timer _elapsedTimer = new() { Interval = 500 };
+    private FavoritesService _favorites = null!;
+    private bool _busy;
+    private bool _seeking;
 
-    /// <summary>Builds the temporary playlist/controls surface with no Designer dependency.</summary>
+    /// <summary>Creates the player window and attaches the native video surface.</summary>
     public Form1()
     {
-        Text = "Amazing Player — Bootstrap (not final)";
-        StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(1100, 700);
-        MinimumSize = new Size(820, 540);
-
-        BuildInterface();
-        AttachVideo(_videoHost);
+        InitializeComponent();
+        AttachVideo(pnlVideo);
+        pnlVideo.Visible = false;
+        InitializeFavorites();
+        ConnectControls();
         ApplyTheme();
-        _clock.Tick += (_, _) => UpdateElapsed();
-        _clock.Start();
+        SetVolume(trkVolume.Value);
+        _elapsedTimer.Tick += (_, _) => UpdateElapsed();
+        _elapsedTimer.Start();
+        Load += (_, _) => LoadLibrary();
     }
 
-    private void BuildInterface()
+    private void InitializeFavorites()
     {
-        var layout = new TableLayoutPanel
+        try
         {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 4,
-            Padding = new Padding(8)
-        };
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-        Controls.Add(layout);
-
-        var menu = BuildMenu();
-        layout.Controls.Add(menu, 0, 0);
-        MainMenuStrip = menu;
-
-        var split = new SplitContainer
+            _favorites = new FavoritesService();
+        }
+        catch (FavoritesIOException ex)
         {
-            Dock = DockStyle.Fill,
-            Orientation = Orientation.Vertical,
-            SplitterDistance = 530
-        };
-        layout.Controls.Add(split, 0, 1);
+            // The app should remain usable even when its normal data folder is read-only.
+            string backup = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "AmazingPlayer", "Favorites.txt");
+            _favorites = new FavoritesService(new FavoritesStore(backup));
+            SetStatus("Favorites moved to user data folder: " + ex.Message);
+        }
+    }
 
-        _playlistView.Dock = DockStyle.Fill;
-        _playlistView.View = View.Details;
-        _playlistView.FullRowSelect = true;
-        _playlistView.MultiSelect = false;
-        _playlistView.GridLines = true;
-        _playlistView.HideSelection = false;
-        _playlistView.Columns.Add("Title", 170);
-        _playlistView.Columns.Add("Artist", 120);
-        _playlistView.Columns.Add("Album / Resolution", 145);
-        _playlistView.Columns.Add("Length", 90);
-        _playlistView.Columns.Add("Type", 65);
-        _playlistView.Columns.Add("Path", 250);
-        _playlistView.DoubleClick += (_, _) => PlaySelected();
-        split.Panel1.Controls.Add(_playlistView);
+    private void ConnectControls()
+    {
+        btnAdd.Click += async (_, _) => await AddFilesAsync();
+        btnPlay.Click += (_, _) => PlaySelected();
+        btnPause.Click += (_, _) => Pause();
+        btnStop.Click += (_, _) => Stop();
+        btnPrevious.Click += (_, _) => Previous();
+        btnNext.Click += (_, _) => Next();
+        btnFavorite.Click += (_, _) => ToggleFavorite();
+        btnShuffle.Click += (_, _) => ToggleShuffle();
+        btnRepeat.Click += (_, _) => CycleRepeat();
+        btnSortTitle.Click += (_, _) => SortLibrary(SortKey.Title);
+        btnSortArtist.Click += (_, _) => SortLibrary(SortKey.Artist);
+        chkFavoritesOnly.CheckedChanged += (_, _) => RefreshListView();
+        txtSearch.TextChanged += (_, _) => RefreshListView();
+        lstPlaylist.DoubleClick += (_, _) => PlaySelected();
+        lstPlaylist.SelectedIndexChanged += (_, _) => UpdateFavoriteButton();
 
-        _videoHost.Dock = DockStyle.Fill;
-        _videoHost.BackColor = Color.Black;
-        split.Panel2.Controls.Add(_videoHost);
-
-        var controls = new FlowLayoutPanel
+        trkVolume.Scroll += (_, _) => SetVolume(trkVolume.Value);
+        trkSeek.MouseDown += (_, _) => _seeking = true;
+        trkSeek.MouseUp += (_, _) =>
         {
-            Dock = DockStyle.Fill,
-            AutoScroll = true,
-            WrapContents = false
+            if (trkSeek.Enabled)
+                Seek(trkSeek.Value / 1000f);
+            _seeking = false;
         };
-        layout.Controls.Add(controls, 0, 2);
 
-        controls.Controls.Add(MakeButton("Add MP3/MP4", async () => await AddFromDialogAsync()));
-        controls.Controls.Add(MakeButton("Play", PlaySelected));
-        controls.Controls.Add(MakeButton("Pause", Pause));
-        controls.Controls.Add(MakeButton("Stop", Stop));
-        controls.Controls.Add(MakeButton("Prev", Previous));
-        controls.Controls.Add(MakeButton("Next", Next));
-
-        var volume = new TrackBar
+        miAdd.Click += async (_, _) => await AddFilesAsync();
+        miSave.Click += (_, _) => SaveLibrary();
+        miReload.Click += (_, _) => LoadLibrary();
+        miPlay.Click += (_, _) => PlaySelected();
+        miPause.Click += (_, _) => Pause();
+        miStop.Click += (_, _) => Stop();
+        miNext.Click += (_, _) => Next();
+        miPrevious.Click += (_, _) => Previous();
+        miShuffle.Click += (_, _) => ToggleShuffle();
+        miRepeat.Click += (_, _) => CycleRepeat();
+        miSortTitle.Click += (_, _) => SortLibrary(SortKey.Title);
+        miSortArtist.Click += (_, _) => SortLibrary(SortKey.Artist);
+        miFavorites.Click += (_, _) =>
+            chkFavoritesOnly.Checked = !chkFavoritesOnly.Checked;
+        miAbout.Click += (_, _) =>
         {
-            Minimum = 0, Maximum = 100, Value = 70,
-            TickFrequency = 20, Width = 125, AutoSize = false, Height = 36
+            using var about = new SplashForm();
+            about.ShowDialog(this);
         };
-        volume.Scroll += (_, _) => SetVolume(volume.Value);
-        controls.Controls.Add(volume);
-        SetVolume(volume.Value);
-
-        _nowPlaying.AutoSize = false;
-        _nowPlaying.Width = 250;
-        _nowPlaying.Height = 30;
-        _nowPlaying.Text = "Now playing: —";
-        controls.Controls.Add(_nowPlaying);
-
-        _elapsed.AutoSize = false;
-        _elapsed.Width = 140;
-        _elapsed.Height = 30;
-        _elapsed.Text = "00:00:00 / 00:00:00";
-        controls.Controls.Add(_elapsed);
-
-        _status.Dock = DockStyle.Fill;
-        _status.Text = "Bootstrap UI: library persistence, modes, favorites and skin pending.";
-        layout.Controls.Add(_status, 0, 3);
     }
 
-    private MenuStrip BuildMenu()
+    private async Task AddFilesAsync()
     {
-        var bar = new MenuStrip { Dock = DockStyle.Fill };
-        var file = new ToolStripMenuItem("&File");
-        file.DropDownItems.Add(MenuAction("&Add Files...", Keys.Control | Keys.O,
-            async () => await AddFromDialogAsync()));
-        file.DropDownItems.Add(MenuAction("E&xit", Keys.None, () => Close()));
-
-        var playback = new ToolStripMenuItem("&Playback");
-        playback.DropDownItems.Add(MenuAction("&Play", Keys.F5, PlaySelected));
-        playback.DropDownItems.Add(MenuAction("P&ause", Keys.F6, Pause));
-        playback.DropDownItems.Add(MenuAction("&Stop", Keys.F7, Stop));
-        playback.DropDownItems.Add(MenuAction("&Next", Keys.Control | Keys.Right, Next));
-        playback.DropDownItems.Add(MenuAction("Pre&vious", Keys.Control | Keys.Left, Previous));
-
-        var library = new ToolStripMenuItem("&Library");
-        library.DropDownItems.Add(new ToolStripMenuItem("Sorting arrives in P2") { Enabled = false });
-
-        var help = new ToolStripMenuItem("&Help");
-        help.DropDownItems.Add(MenuAction("&About", Keys.F1, () =>
-            MessageBox.Show("Amazing Player — BSCS2A / Group 1 Amazing\nBootstrap build", "About")));
-
-        bar.Items.AddRange(new ToolStripItem[] { file, playback, library, help });
-        return bar;
-    }
-
-    private static ToolStripMenuItem MenuAction(string title, Keys shortcut, Action action)
-    {
-        var item = new ToolStripMenuItem(title) { ShortcutKeys = shortcut };
-        item.Click += (_, _) => action();
-        return item;
-    }
-
-    private static Button MakeButton(string title, Action action)
-    {
-        var button = new Button { Text = title, AutoSize = true, Height = 30 };
-        button.Click += (_, _) => action();
-        return button;
-    }
-
-    private async Task AddFromDialogAsync()
-    {
-        if (_importBusy) return;
+        if (_busy) return;
 
         using var dialog = new OpenFileDialog
         {
             Filter = "Media files (*.mp3;*.mp4)|*.mp3;*.mp4|All files (*.*)|*.*",
-            Multiselect = true
+            Multiselect = true,
+            Title = "Choose music or video files"
         };
-        if (dialog.ShowDialog() != DialogResult.OK) return;
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-        _importBusy = true;
+        _busy = true;
+        btnAdd.Enabled = false;
+        miAdd.Enabled = false;
         try
         {
-            var paths = new HashSet<string>(Playlist.Select(x => x.FilePath),
-                StringComparer.OrdinalIgnoreCase);
-            var additions = new List<MediaItem>();
-            int failures = 0;
-            foreach (string path in dialog.FileNames)
-            {
-                if (!_extensions.Contains(Path.GetExtension(path)) || !paths.Add(path))
-                    continue;
+            var knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (MediaItem item in Playlist)
+                knownPaths.Add(item.FilePath);
 
+            int added = 0;
+            int failed = 0;
+            foreach (string filePath in dialog.FileNames)
+            {
+                if (!_extensions.Contains(Path.GetExtension(filePath)) || !knownPaths.Add(filePath))
+                    continue;
                 try
                 {
-                    additions.Add(await ReadMediaItemAsync(path));
+                    MediaItem item = await ReadMediaItemAsync(filePath);
+                    Playlist.Add(item);
+                    added++;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is IOException ||
+                                           ex is NotSupportedException ||
+                                           ex is InvalidOperationException)
                 {
-                    failures++;
-                    SetStatus("Skipped unreadable file: " + Path.GetFileName(path) + " — " + ex.Message);
+                    failed++;
+                    SetStatus("Skipped " + Path.GetFileName(filePath) + ": " + ex.Message);
                 }
             }
 
-            Playlist.AddRange(additions);
-            if (CurrentIndex < 0 && Playlist.Count > 0) CurrentIndex = 0;
-            RebuildList();
-            SetStatus($"Added {additions.Count} file(s); {failures} unreadable. Saving is P2.");
+            if (CurrentIndex < 0 && Playlist.Count > 0)
+                CurrentIndex = 0;
+            _playbackOrder.ResetShuffle();
+            RefreshListView();
+            if (added > 0) SaveLibrary();
+            SetStatus($"Added {added} media file(s). Could not load: {failed}.");
         }
         finally
         {
-            _importBusy = false;
+            _busy = false;
+            btnAdd.Enabled = true;
+            miAdd.Enabled = true;
         }
     }
 
-    private void RebuildList()
+    private void LoadLibrary()
     {
-        _playlistView.BeginUpdate();
         try
         {
-            _playlistView.Items.Clear();
-            for (int i = 0; i < Playlist.Count; i++)
+            List<MediaItem> items = LibraryStore.Load(LibraryStore.DefaultPath, out int skipped);
+            SetPlaylist(items);
+            _playbackOrder.ResetShuffle();
+            RefreshListView();
+            SetStatus($"Loaded {items.Count} item(s) from Library.txt. Skipped {skipped} invalid record(s).");
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            SetStatus("Unable to read library: " + ex.Message);
+            MessageBox.Show(this, ex.Message, "Library error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private void SaveLibrary()
+    {
+        try
+        {
+            LibraryStore.Save(LibraryStore.DefaultPath, Playlist);
+            SetStatus("Library saved.");
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            SetStatus("Unable to save library: " + ex.Message);
+            MessageBox.Show(this, ex.Message, "Library error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private void RefreshListView()
+    {
+        MediaItem? selectedItem = CurrentIndex >= 0 && CurrentIndex < Playlist.Count
+            ? Playlist[CurrentIndex] : null;
+        string search = txtSearch.Text.Trim();
+        lstPlaylist.BeginUpdate();
+        try
+        {
+            lstPlaylist.Items.Clear();
+            foreach (MediaItem item in Playlist)
             {
-                var item = Playlist[i];
-                var row = new ListViewItem(item.Title) { Tag = item };
+                if (chkFavoritesOnly.Checked && !_favorites.IsFavorite(item))
+                    continue;
+                if (search.Length > 0 &&
+                    item.Title.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0 &&
+                    item.Artist.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                var row = new ListViewItem((_favorites.IsFavorite(item) ? "♥ " : "") + item.Title)
+                {
+                    Tag = item,
+                    ToolTipText = item.FilePath
+                };
                 row.SubItems.Add(item.Artist);
                 row.SubItems.Add(item.Extra);
                 row.SubItems.Add(item.DurationText);
                 row.SubItems.Add(item.MediaType);
                 row.SubItems.Add(item.FilePath);
-                _playlistView.Items.Add(row);
+                lstPlaylist.Items.Add(row);
+                if (ReferenceEquals(item, selectedItem))
+                    row.Selected = true;
             }
-            SelectCurrentRow();
         }
         finally
         {
-            _playlistView.EndUpdate();
+            lstPlaylist.EndUpdate();
         }
-    }
-
-    private void SelectCurrentRow()
-    {
-        if (CurrentIndex >= 0 && CurrentIndex < _playlistView.Items.Count)
-        {
-            _playlistView.SelectedItems.Clear();
-            _playlistView.Items[CurrentIndex].Selected = true;
-        }
+        UpdateFavoriteButton();
     }
 
     private void PlaySelected()
     {
-        if (_playlistView.SelectedIndices.Count > 0)
-            CurrentIndex = _playlistView.SelectedIndices[0];
+        if (lstPlaylist.SelectedItems.Count > 0 &&
+            lstPlaylist.SelectedItems[0].Tag is MediaItem item)
+        {
+            int index = Playlist.FindIndex(existing => ReferenceEquals(existing, item));
+            if (index >= 0) CurrentIndex = index;
+        }
         Play();
+    }
+
+    private void SortLibrary(SortKey key)
+    {
+        if (Playlist.Count < 2)
+        {
+            SetStatus("Add more media before sorting.");
+            return;
+        }
+        var sorted = new List<MediaItem>(Playlist);
+        LibrarySorter.InsertionSort(sorted, key);
+        SetPlaylist(sorted);
+        _playbackOrder.ResetShuffle();
+        RefreshListView();
+        SaveLibrary();
+        SetStatus("Sorted playlist by " + key + ".");
+    }
+
+    private void ToggleFavorite()
+    {
+        MediaItem? selected = lstPlaylist.SelectedItems.Count > 0
+            ? lstPlaylist.SelectedItems[0].Tag as MediaItem
+            : (CurrentIndex >= 0 && CurrentIndex < Playlist.Count ? Playlist[CurrentIndex] : null);
+        if (selected == null)
+        {
+            SetStatus("Select a track to add to favorites.");
+            return;
+        }
+        try
+        {
+            bool liked = _favorites.ToggleFavorite(selected.FilePath);
+            RefreshListView();
+            SetStatus(liked ? "Added to favorites." : "Removed from favorites.");
+        }
+        catch (FavoritesIOException ex)
+        {
+            SetStatus(ex.Message);
+            MessageBox.Show(this, ex.Message, "Favorites error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private void UpdateFavoriteButton()
+    {
+        MediaItem? selected = lstPlaylist.SelectedItems.Count > 0
+            ? lstPlaylist.SelectedItems[0].Tag as MediaItem
+            : (CurrentIndex >= 0 && CurrentIndex < Playlist.Count ? Playlist[CurrentIndex] : null);
+        btnFavorite.Text = selected != null && _favorites.IsFavorite(selected)
+            ? "♥  Unlike" : "♡  Like";
+    }
+
+    private void ToggleShuffle()
+    {
+        _playbackOrder.Shuffle = !_playbackOrder.Shuffle;
+        string label = "Shuffle: " + (_playbackOrder.Shuffle ? "On" : "Off");
+        btnShuffle.Text = label;
+        miShuffle.Text = label;
+        SetStatus(label);
+    }
+
+    private void CycleRepeat()
+    {
+        _playbackOrder.Repeat = _playbackOrder.Repeat.NextMode();
+        string label = _playbackOrder.Repeat.ToDisplayText();
+        btnRepeat.Text = label;
+        miRepeat.Text = label;
+        SetStatus(label);
+    }
+
+    /// <inheritdoc/>
+    public override void Next()
+    {
+        int next = _playbackOrder.GetNextIndex(
+            CurrentIndex, Playlist.Count, AdvanceReason.UserNext);
+        if (next == PlaybackOrder.NoNextIndex) return;
+        CurrentIndex = next;
+        Play();
+    }
+
+    /// <inheritdoc/>
+    public override void Stop()
+    {
+        base.Stop();
+        trkSeek.Value = 0;
+        UpdateElapsed();
+    }
+
+    /// <inheritdoc/>
+    protected override void PlayNextOrStop()
+    {
+        int next = _playbackOrder.GetNextIndex(
+            CurrentIndex, Playlist.Count, AdvanceReason.MediaEnded);
+        if (next == PlaybackOrder.NoNextIndex)
+            Stop();
+        else
+        {
+            CurrentIndex = next;
+            Play();
+        }
+    }
+
+    /// <inheritdoc/>
+    protected override void OnNowPlayingChanged(MediaItem item)
+    {
+        string title = item.Title;
+        lblCassetteTitle.Text = title.Length > 31 ? title[..28] + "..." : title;
+        lblNowPlaying.Text = item.Artist + " — " + item.Title +
+            (item.Extra == "-" ? "" : "  •  " + item.Extra);
+
+        bool video = item is VideoItem;
+        pnlVideo.Visible = video;
+        if (video) pnlVideo.BringToFront();
+        trkSeek.Enabled = true;
+        for (int index = 0; index < lstPlaylist.Items.Count; index++)
+        {
+            if (ReferenceEquals(lstPlaylist.Items[index].Tag, item))
+            {
+                lstPlaylist.Items[index].Selected = true;
+                break;
+            }
+        }
+        UpdateFavoriteButton();
+        UpdateElapsed();
     }
 
     private void UpdateElapsed()
     {
         if (CurrentIndex < 0 || CurrentIndex >= Playlist.Count)
         {
-            _elapsed.Text = "00:00:00 / 00:00:00";
+            lblElapsed.Text = "00:00:00 / 00:00:00";
+            if (!_seeking) trkSeek.Value = 0;
             return;
         }
-
-        _elapsed.Text = Format(ElapsedTime) + " / " + Playlist[CurrentIndex].DurationText;
+        TimeSpan duration = Playlist[CurrentIndex].Duration;
+        lblElapsed.Text = FormatTime(ElapsedTime) + " / " + FormatTime(duration);
+        if (!_seeking && duration.TotalMilliseconds > 0)
+        {
+            int progress = (int)Math.Clamp(
+                ElapsedTime.TotalMilliseconds / duration.TotalMilliseconds * 1000.0, 0, 1000);
+            trkSeek.Value = progress;
+        }
     }
 
-    private static string Format(TimeSpan time) =>
-        string.Format("{0:00}:{1:00}:{2:00}", (int)time.TotalHours, time.Minutes, time.Seconds);
+    private static string FormatTime(TimeSpan time) =>
+        string.Format("{0:00}:{1:00}:{2:00}",
+            (int)time.TotalHours, time.Minutes, time.Seconds);
 
     /// <inheritdoc/>
-    protected override void OnNowPlayingChanged(MediaItem item)
+    protected override void SetStatus(string text)
     {
-        _nowPlaying.Text = "Now playing: " + item.Title + " — " + item.Artist;
-        SelectCurrentRow();
-        UpdateElapsed();
+        if (lblStatus != null)
+            lblStatus.Text = "Status: " + text;
     }
-
-    /// <inheritdoc/>
-    protected override void SetStatus(string text) => _status.Text = text;
 
     /// <inheritdoc/>
     protected override void ApplyTheme()
     {
-        BackColor = Color.FromArgb(242, 243, 247);
-        ForeColor = Color.FromArgb(25, 28, 34);
+        BackColor = Theme.Canvas;
+        ForeColor = Theme.Ink;
+        pnlCassette.BackColor = Theme.CassetteBay;
+        pnlDetails.BackColor = Theme.Paper;
+        flowTransport.BackColor = Theme.Gold;
+        flowSeek.BackColor = Theme.LightGold;
+        lblCassetteTitle.ForeColor = Theme.Ink;
+        Image? cassette = Theme.LoadImage("cassette_art.png");
+        if (cassette != null)
+            pnlCassette.BackgroundImage = cassette;
+        pnlCassette.BackgroundImageLayout = ImageLayout.Stretch;
+        Image? logo = Theme.LoadImage("logo.png");
+        if (logo != null)
+        {
+            using (logo)
+            {
+                Icon? appIcon = Theme.TryLoadIcon("logo.ico");
+                if (appIcon != null) Icon = appIcon;
+            }
+        }
     }
 
     /// <inheritdoc/>
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        _clock.Stop();
+        _elapsedTimer.Stop();
+        _elapsedTimer.Dispose();
         base.OnFormClosing(e);
-    }
-
-    /// <inheritdoc/>
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing) _clock.Dispose();
-        base.Dispose(disposing);
     }
 }
