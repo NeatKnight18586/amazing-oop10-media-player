@@ -23,6 +23,8 @@ jobs:
         run: dotnet restore app/MediaPlayerPrj/MediaPlayerPrj.csproj
       - name: Build
         run: dotnet build app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --no-restore
+      - name: Check Visual Studio solution
+        run: dotnet build AmazingPlayer.sln --configuration Release --no-restore
       - name: Verify library persistence and sorting
         run: dotnet test tests/LibraryTests/LibraryTests.csproj --configuration Release --verbosity minimal
       - name: Verify playback modes
