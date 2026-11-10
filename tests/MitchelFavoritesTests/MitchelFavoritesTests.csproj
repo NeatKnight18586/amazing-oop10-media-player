@@ -13,8 +13,9 @@
   </ItemGroup>
   <!-- Link only the non-UI source files so tests build on any platform -->
   <ItemGroup>
-    <Compile Include="../../app/MediaPlayerPrj/FavoritesStore.cs" Link="FavoritesStore.cs" />
-    <Compile Include="../../app/MediaPlayerPrj/MediaItem.cs"      Link="MediaItem.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/FavoritesStore.cs"   Link="FavoritesStore.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/FavoritesService.cs" Link="FavoritesService.cs" />
+    <Compile Include="../../app/MediaPlayerPrj/MediaItem.cs"        Link="MediaItem.cs" />
     <Compile Include="../../app/MediaPlayerPrj/AudioItem.cs"      Link="AudioItem.cs" />
     <Compile Include="../../app/MediaPlayerPrj/VideoItem.cs"      Link="VideoItem.cs" />
   </ItemGroup>
