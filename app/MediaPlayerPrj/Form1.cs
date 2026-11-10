@@ -427,6 +427,12 @@ public partial class Form1 : BasePlayerForm
         if (cassette != null)
             pnlCassette.BackgroundImage = cassette;
         pnlCassette.BackgroundImageLayout = ImageLayout.Stretch;
+        Image? titlePaper = Theme.LoadImage("paper_texture.png");
+        if (titlePaper != null)
+        {
+            lblCassetteTitle.BackgroundImage = titlePaper;
+            lblCassetteTitle.BackgroundImageLayout = ImageLayout.Tile;
+        }
         Image? texture = Theme.LoadImage("paper_texture.png");
         if (texture != null)
         {

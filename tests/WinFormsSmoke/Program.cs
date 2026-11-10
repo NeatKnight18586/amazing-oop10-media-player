@@ -57,6 +57,7 @@ internal static class Program
                     Require(control.Left >= 0 && control.Right <= transport.ClientSize.Width,
                         button + " should not extend outside the transport row");
                 }
+                CaptureIfPossible(form, "minimum-window.png");
                 form.Hide();
             }
 
