@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -25,6 +26,8 @@ public partial class Form1
     private CheckBox chkFavoritesOnly = null!;
     private TrackBar trkSeek = null!;
     private TrackBar trkVolume = null!;
+    private Label lblSeek = null!;
+    private Label lblVolume = null!;
     private Button btnAdd = null!;
     private Button btnPlay = null!;
     private Button btnPause = null!;
@@ -293,10 +296,10 @@ public partial class Form1
         flowSeek.WrapContents = false;
         flowSeek.AutoScroll = true;
         flowSeek.Padding = new Padding(10, 9, 0, 0);
-        var lblSeek = new Label { Text = "Seek", Width = 38, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
+        lblSeek = new Label { Name = "lblSeek", Text = "Seek", Width = 38, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
         trkSeek.Name = "trkSeek"; trkSeek.Width = 650; trkSeek.Height = 45;
         trkSeek.Maximum = 1000; trkSeek.TickStyle = TickStyle.None; trkSeek.Enabled = false;
-        var lblVolume = new Label { Text = "Volume", Width = 66, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
+        lblVolume = new Label { Name = "lblVolume", Text = "Volume", Width = 66, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
         trkVolume.Name = "trkVolume"; trkVolume.Width = 205; trkVolume.Height = 45;
         trkVolume.Minimum = 0; trkVolume.Maximum = 100; trkVolume.Value = 70;
         trkVolume.TickStyle = TickStyle.None;

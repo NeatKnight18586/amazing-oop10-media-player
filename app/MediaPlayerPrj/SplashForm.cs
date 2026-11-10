@@ -8,11 +8,15 @@ namespace mediaPlayerPrj;
 public partial class SplashForm : Form
 {
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 3000 };
+    private PictureBox[] memberPhotos = null!;
+    private Label[] memberCaptions = null!;
 
     /// <summary>Builds the splash screen and loads optional original group assets.</summary>
     public SplashForm()
     {
         InitializeComponent();
+        memberPhotos = new [] { picMember1, picMember2, picMember3, picMember4, picMember5 };
+        memberCaptions = new [] { lblMember1, lblMember2, lblMember3, lblMember4, lblMember5 };
         picLogo.Image = Theme.LoadImage("logo.png");
         for (int index = 0; index < TeamInfo.Members.Count; index++)
         {
