@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Isolated tests for Chris's playback-mode logic (Issue #4, FR13).
+    Targets plain net8.0 so the pure policy classes can be tested without
+    WinForms or VLC. The source files are linked from the app project, not copied.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\app\MediaPlayerPrj\RepeatMode.cs" Link="Linked\RepeatMode.cs" />
+    <Compile Include="..\..\app\MediaPlayerPrj\PlaybackOrder.cs" Link="Linked\PlaybackOrder.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>
