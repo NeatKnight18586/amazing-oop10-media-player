@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'app/**'
+      - 'tests/**'
       - '.github/workflows/windows-build.yml'
   pull_request:
     paths:
@@ -22,6 +23,12 @@ jobs:
         run: dotnet restore app/MediaPlayerPrj/MediaPlayerPrj.csproj
       - name: Build
         run: dotnet build app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --no-restore
+      - name: Verify library persistence and sorting
+        run: dotnet test tests/LibraryTests/LibraryTests.csproj --configuration Release --verbosity minimal
+      - name: Verify playback modes
+        run: dotnet test tests/PlaybackModes.Tests/PlaybackModes.Tests.csproj --configuration Release --verbosity minimal
+      - name: Verify favorites
+        run: dotnet test tests/MitchelFavoritesTests/MitchelFavoritesTests.csproj --configuration Release --verbosity minimal
       - name: Publish self-contained win-x64
         run: dotnet publish app/MediaPlayerPrj/MediaPlayerPrj.csproj --configuration Release --runtime win-x64 --self-contained true --output publish/AmazingPlayer -p:PublishSingleFile=false -p:PublishTrimmed=false
       - name: Verify publish content
@@ -32,7 +39,7 @@ jobs:
       - name: Upload standalone test package
         uses: actions/upload-artifact@v4
         with:
-          name: AmazingPlayer-bootstrap-win-x64-self-contained
+          name: AmazingPlayer-integration-win-x64-self-contained
           path: publish/AmazingPlayer/
           if-no-files-found: error
           retention-days: 7

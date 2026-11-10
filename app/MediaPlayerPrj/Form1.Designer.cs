@@ -258,6 +258,7 @@ public partial class Form1
         lstPlaylist.BackColor = Color.FromArgb(252, 232, 195);
         lstPlaylist.Columns.Add("Title", 148);
         lstPlaylist.Columns.Add("Artist", 110);
+        lstPlaylist.Columns.Add("Album / Resolution", 150);
         lstPlaylist.Columns.Add("Length", 78);
         lstPlaylist.Columns.Add("Type", 60);
         lstPlaylist.Columns.Add("File Path", 275);
@@ -296,10 +297,14 @@ public partial class Form1
         flowSeek.WrapContents = false;
         flowSeek.AutoScroll = true;
         flowSeek.Padding = new Padding(10, 9, 0, 0);
-        lblSeek = new Label { Name = "lblSeek", Text = "Seek", Width = 38, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
+        lblSeek = new Label();
+        lblSeek.Name = "lblSeek"; lblSeek.Text = "Seek"; lblSeek.Width = 38; lblSeek.Height = 40;
+        lblSeek.TextAlign = ContentAlignment.MiddleLeft;
         trkSeek.Name = "trkSeek"; trkSeek.Width = 650; trkSeek.Height = 45;
         trkSeek.Maximum = 1000; trkSeek.TickStyle = TickStyle.None; trkSeek.Enabled = false;
-        lblVolume = new Label { Name = "lblVolume", Text = "Volume", Width = 66, Height = 40, TextAlign = ContentAlignment.MiddleLeft };
+        lblVolume = new Label();
+        lblVolume.Name = "lblVolume"; lblVolume.Text = "Volume"; lblVolume.Width = 66; lblVolume.Height = 40;
+        lblVolume.TextAlign = ContentAlignment.MiddleLeft;
         trkVolume.Name = "trkVolume"; trkVolume.Width = 205; trkVolume.Height = 45;
         trkVolume.Minimum = 0; trkVolume.Maximum = 100; trkVolume.Value = 70;
         trkVolume.TickStyle = TickStyle.None;

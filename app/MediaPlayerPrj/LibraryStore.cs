@@ -85,14 +85,28 @@ public static class LibraryStore
         string type = (legacyFormat ? fields[4] : fields[0]).Trim();
         string title = (legacyFormat ? fields[0] : fields[1]).Trim();
         string artist = (legacyFormat ? fields[1] : fields[2]).Trim();
-        string timeText = (legacyFormat ? fields[3] : fields[3]).Trim();
+        string timeText = fields[3].Trim();
         string filePath = (legacyFormat ? fields[5] : fields[4]).Trim();
         string extra = (legacyFormat ? fields[2] : fields[5]).Trim();
 
-        if (string.IsNullOrWhiteSpace(filePath) ||
-            !TimeSpan.TryParse(timeText, CultureInfo.InvariantCulture, out TimeSpan duration) ||
-            duration < TimeSpan.Zero)
+        if (string.IsNullOrWhiteSpace(filePath))
             return false;
+
+        TimeSpan duration;
+        if (legacyFormat && timeText.Split(':').Length == 2)
+        {
+            string[] parts = timeText.Split(':');
+            if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out int minutes) ||
+                !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out int seconds) ||
+                minutes < 0 || seconds < 0 || seconds >= 60)
+                return false;
+            duration = TimeSpan.FromMinutes(minutes) + TimeSpan.FromSeconds(seconds);
+        }
+        else if (!TimeSpan.TryParse(timeText, CultureInfo.InvariantCulture, out duration) ||
+                 duration < TimeSpan.Zero)
+        {
+            return false;
+        }
 
         if (type.Equals("Audio", StringComparison.OrdinalIgnoreCase) ||
             type.Equals("MP3", StringComparison.OrdinalIgnoreCase))

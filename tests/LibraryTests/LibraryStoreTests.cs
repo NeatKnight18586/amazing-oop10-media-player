@@ -75,6 +75,7 @@ public class LibraryStoreTests
             Assert.AreEqual(1, items.Count);
             Assert.AreEqual(0, skipped);
             Assert.AreEqual("Old Track", items[0].Title);
+            Assert.AreEqual(TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(10), items[0].Duration);
         }
         finally { File.Delete(path); }
     }
