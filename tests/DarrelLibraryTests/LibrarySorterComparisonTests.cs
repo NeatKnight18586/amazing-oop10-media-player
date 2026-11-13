@@ -322,5 +322,154 @@ public class LibrarySorterComparisonTests
         Assert.Same(item2, list[0]);
         Assert.Same(item1, list[1]);
     }
+
+    // ─── Checkpoint 9: Robust sorting tests ───────────────────────────────────
+
+    [Fact]
+    public void InsertionSort_ByArtist_IsStable_PreservesRelativeOrderForEqualArtists()
+    {
+        // All three share the same artist name; original relative order must survive.
+        var first  = new AudioItem("Track 1", "Same Band", TimeSpan.FromMinutes(1), "1.mp3");
+        var second = new AudioItem("Track 2", "Same Band", TimeSpan.FromMinutes(2), "2.mp3");
+        var third  = new AudioItem("Track 3", "Same Band", TimeSpan.FromMinutes(3), "3.mp3");
+        var list   = new List<MediaItem> { first, second, third };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        // Stability: equal-keyed items retain their original insertion order.
+        Assert.Same(first,  list[0]);
+        Assert.Same(second, list[1]);
+        Assert.Same(third,  list[2]);
+    }
+
+    [Fact]
+    public void InsertionSort_ByTitle_IsCaseInsensitive_SortsLowerAndUpperCaseCorrectly()
+    {
+        // "apple" < "Banana" < "CHERRY" when case-insensitive — verify the sort
+        // actually uses the same CurrentCultureIgnoreCase rule as Compare().
+        var c = new AudioItem("CHERRY", "Artist", TimeSpan.FromMinutes(1), "c.mp3");
+        var a = new AudioItem("apple",  "Artist", TimeSpan.FromMinutes(1), "a.mp3");
+        var b = new AudioItem("Banana", "Artist", TimeSpan.FromMinutes(1), "b.mp3");
+        var list = new List<MediaItem> { c, a, b };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.Equal("apple",  list[0].Title);
+        Assert.Equal("Banana", list[1].Title);
+        Assert.Equal("CHERRY", list[2].Title);
+    }
+
+    [Fact]
+    public void InsertionSort_ByArtist_IsCaseInsensitive_SortsLowerAndUpperCaseCorrectly()
+    {
+        // "zara" > "Maria" > "aaron" when case-insensitive descending input.
+        var z = new AudioItem("Song", "zara",  TimeSpan.FromMinutes(1), "z.mp3");
+        var m = new AudioItem("Song", "Maria", TimeSpan.FromMinutes(1), "m.mp3");
+        var a = new AudioItem("Song", "aaron", TimeSpan.FromMinutes(1), "a.mp3");
+        var list = new List<MediaItem> { z, m, a };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        Assert.Equal("aaron", list[0].Artist);
+        Assert.Equal("Maria", list[1].Artist);
+        Assert.Equal("zara",  list[2].Artist);
+    }
+
+    [Fact]
+    public void InsertionSort_MixedAudioAndVideo_SortsByArtistRegardlessOfSubclass()
+    {
+        // Mix subclasses and sort by Artist — the sort must be subclass-agnostic.
+        var video = new VideoItem("Documentary", "Zane Director", TimeSpan.FromMinutes(60), "v.mp4", "4K");
+        var audio = new AudioItem("Ballad",      "Amy Singer",    TimeSpan.FromMinutes(4),  "a.mp3");
+        var list  = new List<MediaItem> { video, audio };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        Assert.IsType<AudioItem>(list[0]);    // "Amy Singer" precedes "Zane Director"
+        Assert.IsType<VideoItem>(list[1]);
+    }
+
+    [Fact]
+    public void InsertionSort_AlreadySortedByArtist_RemainsCorrect()
+    {
+        var a = new AudioItem("Song", "Adele",    TimeSpan.FromMinutes(1), "a.mp3");
+        var b = new AudioItem("Song", "Beyoncé",  TimeSpan.FromMinutes(1), "b.mp3");
+        var c = new AudioItem("Song", "Coldplay", TimeSpan.FromMinutes(1), "c.mp3");
+        var list = new List<MediaItem> { a, b, c };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        // Already in order; references must be unchanged.
+        Assert.Same(a, list[0]);
+        Assert.Same(b, list[1]);
+        Assert.Same(c, list[2]);
+    }
+
+    [Fact]
+    public void InsertionSort_ReverseSortedByArtist_SortsCorrectly()
+    {
+        var c = new AudioItem("Song", "Coldplay", TimeSpan.FromMinutes(1), "c.mp3");
+        var b = new AudioItem("Song", "Beyoncé",  TimeSpan.FromMinutes(1), "b.mp3");
+        var a = new AudioItem("Song", "Adele",    TimeSpan.FromMinutes(1), "a.mp3");
+        var list = new List<MediaItem> { c, b, a };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        Assert.Equal("Adele",    list[0].Artist);
+        Assert.Equal("Beyoncé",  list[1].Artist);
+        Assert.Equal("Coldplay", list[2].Artist);
+    }
+
+    [Fact]
+    public void InsertionSort_LargerList_AllOriginalReferencesPreserved_NoDuplicates()
+    {
+        // 10-item list in deliberately scrambled order; after sorting every
+        // original reference must be present exactly once and the list length
+        // must not change (no items created, dropped, or duplicated).
+        var items = new List<MediaItem>
+        {
+            new AudioItem("Jupiter",  "Band J", TimeSpan.FromMinutes(4), "j.mp3"),
+            new VideoItem("Alpha",    "Band A", TimeSpan.FromMinutes(5), "a.mp4", "1080p"),
+            new AudioItem("Hotel",    "Band H", TimeSpan.FromMinutes(3), "h.mp3"),
+            new VideoItem("Delta",    "Band D", TimeSpan.FromMinutes(7), "d.mp4", "720p"),
+            new AudioItem("Echo",     "Band E", TimeSpan.FromMinutes(2), "e.mp3"),
+            new AudioItem("Foxtrot",  "Band F", TimeSpan.FromMinutes(6), "f.mp3"),
+            new VideoItem("Bravo",    "Band B", TimeSpan.FromMinutes(8), "b.mp4"),
+            new AudioItem("India",    "Band I", TimeSpan.FromMinutes(1), "i.mp3"),
+            new AudioItem("Golf",     "Band G", TimeSpan.FromMinutes(3), "g.mp3"),
+            new VideoItem("Charlie",  "Band C", TimeSpan.FromMinutes(9), "c.mp4", "4K"),
+        };
+
+        // Capture originals before sorting.
+        var originals = new List<MediaItem>(items);
+
+        LibrarySorter.InsertionSort(items, SortKey.Title);
+
+        // 1. Count must be unchanged.
+        Assert.Equal(originals.Count, items.Count);
+
+        // 2. Every original reference must appear in the sorted list exactly once.
+        foreach (MediaItem original in originals)
+        {
+            int occurrences = 0;
+            foreach (MediaItem sorted in items)
+            {
+                if (ReferenceEquals(original, sorted))
+                {
+                    occurrences++;
+                }
+            }
+            Assert.Equal(1, occurrences);
+        }
+
+        // 3. Titles must be in ascending order.
+        for (int i = 0; i < items.Count - 1; i++)
+        {
+            int cmp = string.Compare(items[i].Title, items[i + 1].Title,
+                                     StringComparison.CurrentCultureIgnoreCase);
+            Assert.True(cmp <= 0,
+                $"Expected '{items[i].Title}' <= '{items[i + 1].Title}' at positions {i}/{i + 1}.");
+        }
+    }
 }
 
