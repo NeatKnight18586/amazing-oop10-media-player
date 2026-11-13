@@ -175,5 +175,152 @@ public class LibrarySorterComparisonTests
         Assert.True(comparer.Compare(itemB, itemA) > 0);
         Assert.Equal(0, comparer.Compare(itemA, itemA));
     }
+
+    // ─── InsertionSort tests (FR12) ───────────────────────────────────────────
+
+    [Fact]
+    public void InsertionSort_ByTitle_SortsAscendingAlphabetically()
+    {
+        var c = new AudioItem("Cherry", "Artist", TimeSpan.FromMinutes(1), "c.mp3");
+        var a = new AudioItem("Apple", "Artist", TimeSpan.FromMinutes(1), "a.mp3");
+        var b = new AudioItem("Banana", "Artist", TimeSpan.FromMinutes(1), "b.mp3");
+        var list = new List<MediaItem> { c, a, b };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.Equal("Apple",  list[0].Title);
+        Assert.Equal("Banana", list[1].Title);
+        Assert.Equal("Cherry", list[2].Title);
+    }
+
+    [Fact]
+    public void InsertionSort_ByArtist_SortsAscendingAlphabetically()
+    {
+        var z = new AudioItem("Song", "Zara",  TimeSpan.FromMinutes(1), "z.mp3");
+        var m = new AudioItem("Song", "Maria", TimeSpan.FromMinutes(1), "m.mp3");
+        var a = new AudioItem("Song", "Aaron", TimeSpan.FromMinutes(1), "a.mp3");
+        var list = new List<MediaItem> { z, m, a };
+
+        LibrarySorter.InsertionSort(list, SortKey.Artist);
+
+        Assert.Equal("Aaron", list[0].Artist);
+        Assert.Equal("Maria", list[1].Artist);
+        Assert.Equal("Zara",  list[2].Artist);
+    }
+
+    [Fact]
+    public void InsertionSort_ByTitle_IsStable_PreservesRelativeOrderForEqualTitles()
+    {
+        // All three have the same title; original insertion order must be preserved.
+        var first  = new AudioItem("Same Title", "Artist A", TimeSpan.FromMinutes(1), "1.mp3");
+        var second = new AudioItem("Same Title", "Artist B", TimeSpan.FromMinutes(2), "2.mp3");
+        var third  = new AudioItem("Same Title", "Artist C", TimeSpan.FromMinutes(3), "3.mp3");
+        var list = new List<MediaItem> { first, second, third };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        // References must be in the original order (stable).
+        Assert.Same(first,  list[0]);
+        Assert.Same(second, list[1]);
+        Assert.Same(third,  list[2]);
+    }
+
+    [Fact]
+    public void InsertionSort_MixedAudioAndVideo_SortsByTitleRegardlessOfSubclass()
+    {
+        var video = new VideoItem("Zulu Documentary", "Director", TimeSpan.FromMinutes(45), "z.mp4", "1080p");
+        var audio = new AudioItem("Alpha Song",       "Musician", TimeSpan.FromMinutes(3),  "a.mp3");
+        var list  = new List<MediaItem> { video, audio };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.IsType<AudioItem>(list[0]);    // "Alpha Song" comes first
+        Assert.IsType<VideoItem>(list[1]);    // "Zulu Documentary" follows
+    }
+
+    [Fact]
+    public void InsertionSort_EmptyList_DoesNotThrow()
+    {
+        var list = new List<MediaItem>();
+        // Should complete silently with no exception.
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+        Assert.Empty(list);
+    }
+
+    [Fact]
+    public void InsertionSort_SingleItem_IsUnchanged()
+    {
+        var item = new AudioItem("Only Track", "Solo Artist", TimeSpan.FromMinutes(4), "only.mp3");
+        var list = new List<MediaItem> { item };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.Single(list);
+        Assert.Same(item, list[0]);
+    }
+
+    [Fact]
+    public void InsertionSort_NullList_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            LibrarySorter.InsertionSort(null!, SortKey.Title));
+    }
+
+    [Fact]
+    public void InsertionSort_InvalidSortKey_ThrowsArgumentOutOfRangeException()
+    {
+        var list = new List<MediaItem>
+        {
+            new AudioItem("Track", "Artist", TimeSpan.FromMinutes(1), "t.mp3")
+        };
+        var badKey = (SortKey)99;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LibrarySorter.InsertionSort(list, badKey));
+    }
+
+    [Fact]
+    public void InsertionSort_AlreadySortedList_RemainsCorrect()
+    {
+        var a = new AudioItem("Alpha", "Artist", TimeSpan.FromMinutes(1), "a.mp3");
+        var b = new AudioItem("Beta",  "Artist", TimeSpan.FromMinutes(1), "b.mp3");
+        var c = new AudioItem("Gamma", "Artist", TimeSpan.FromMinutes(1), "c.mp3");
+        var list = new List<MediaItem> { a, b, c };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.Same(a, list[0]);
+        Assert.Same(b, list[1]);
+        Assert.Same(c, list[2]);
+    }
+
+    [Fact]
+    public void InsertionSort_ReverseSortedList_SortsCorrectly()
+    {
+        var c = new AudioItem("Gamma", "Artist", TimeSpan.FromMinutes(1), "c.mp3");
+        var b = new AudioItem("Beta",  "Artist", TimeSpan.FromMinutes(1), "b.mp3");
+        var a = new AudioItem("Alpha", "Artist", TimeSpan.FromMinutes(1), "a.mp3");
+        var list = new List<MediaItem> { c, b, a };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        Assert.Equal("Alpha", list[0].Title);
+        Assert.Equal("Beta",  list[1].Title);
+        Assert.Equal("Gamma", list[2].Title);
+    }
+
+    [Fact]
+    public void InsertionSort_DoesNotRecreateItems_MovesOriginalReferences()
+    {
+        var item1 = new AudioItem("Bravo", "Artist", TimeSpan.FromMinutes(1), "b.mp3");
+        var item2 = new AudioItem("Alpha", "Artist", TimeSpan.FromMinutes(1), "a.mp3");
+        var list  = new List<MediaItem> { item1, item2 };
+
+        LibrarySorter.InsertionSort(list, SortKey.Title);
+
+        // The same object references are present (not new copies).
+        Assert.Same(item2, list[0]);
+        Assert.Same(item1, list[1]);
+    }
 }
 
