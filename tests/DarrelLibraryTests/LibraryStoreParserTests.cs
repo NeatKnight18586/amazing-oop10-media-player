@@ -76,9 +76,9 @@ public class LibraryStoreParserTests
     }
 
     [Theory]
-    [InlineData("Audio|Song|Artist|00:03:00|C:\\path")] // 5 fields
-    [InlineData("Audio|Song|Artist|00:03:00")] // 4 fields
-    [InlineData("Audio|Song|Artist|00:03:00|C:\\path|Album|ExtraField")] // 7 fields
+    [InlineData("Audio|Song|Artist|00:03:00|C:\\path")]
+    [InlineData("Audio|Song|Artist|00:03:00")]
+    [InlineData("Audio|Song|Artist|00:03:00|C:\\path|Album|ExtraField")]
     public void ParseLine_InvalidFieldCount_ReturnsNull(string line)
     {
         var item = LibraryStore.ParseLine(line);
@@ -97,8 +97,8 @@ public class LibraryStoreParserTests
 
     [Theory]
     [InlineData("not-a-duration")]
-    [InlineData("00:65:00")] // invalid minute
-    [InlineData("00:00:75")] // invalid second
+    [InlineData("00:65:00")]
+    [InlineData("00:00:75")]
     [InlineData("-01:00:00")]
     public void ParseLine_InvalidDuration_ReturnsNull(string invalidDuration)
     {
@@ -118,5 +118,39 @@ public class LibraryStoreParserTests
         Assert.False(fail);
         Assert.Null(invalidItem);
     }
-}
 
+    // Checkpoint 10: Additional parser edge-case tests
+
+    [Fact]
+    public void ParseLine_ZeroDuration_ParsesAsTimeSpanZero()
+    {
+        string line = @"Audio|Silent Track|Artist|00:00:00|C:\Music\silent.mp3|Single";
+        var item = LibraryStore.ParseLine(line);
+
+        Assert.NotNull(item);
+        Assert.IsType<AudioItem>(item);
+        Assert.Equal(TimeSpan.Zero, item.Duration);
+        Assert.Equal("Silent Track", item.Title);
+    }
+
+    [Fact]
+    public void ParseLine_WhitespaceTitle_NormalizesToUnknownTitle()
+    {
+        string line = @"Audio|   |Artist|00:03:00|C:\Music\track.mp3|Album";
+        var item = LibraryStore.ParseLine(line);
+
+        Assert.NotNull(item);
+        Assert.Equal("Unknown Title", item!.Title);
+    }
+
+    [Fact]
+    public void ParseLine_ValidDurationMM_SS_ParsesCorrectly()
+    {
+        string line = @"Audio|Short Track|Artist|03:45|C:\Music\short.mp3|EP";
+        var item = LibraryStore.ParseLine(line);
+
+        Assert.NotNull(item);
+        Assert.IsType<AudioItem>(item);
+        Assert.Equal(new TimeSpan(0, 3, 45), item!.Duration);
+    }
+}
