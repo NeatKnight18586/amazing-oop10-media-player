@@ -15,12 +15,12 @@ public static class TeamInfo
     public const string Team = "Group 1 · Amazing";
 
     /// <summary>Members and agreed project responsibilities.</summary>
-    public static IReadOnlyList<TeamMember> Members { get; } = new []
+    public static IReadOnlyList<TeamMember> Members { get; } = new[]
     {
-        new TeamMember("Darrel Cango", "Library / Sorting", @"Team\darrel.png"),
-        new TeamMember("Chris Garcia", "Playback Modes", @"Team\chris.png"),
-        new TeamMember("Mark Guevarra", "Lead / Integration", @"Team\mark.png"),
-        new TeamMember("Shanen Mirador", "UI / Skin", @"Team\shanen.png"),
-        new TeamMember("Mitchel Susi", "Favorites / QA", @"Team\mitchel.png")
+        new TeamMember("Mark Guevarra", "Lead / Integration", @"Team\mark.jpg"),
+        new TeamMember("Shanen Mirador", "UI / Skin", @"Team\shanen.jpg"),
+        new TeamMember("Darrel Cango", "Library / Sorting", @"Team\darrel.jpg"),
+        new TeamMember("Chris Garcia", "Playback Modes", @"Team\chris.jpg"),
+        new TeamMember("Mitchel Susi", "Favorites / QA", @"Team\mitchel.jpg")
     };
 }

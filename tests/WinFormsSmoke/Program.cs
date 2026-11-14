@@ -23,8 +23,15 @@ internal static class Program
                 Require(splash.Controls.Find("lblGroup", true).Length == 1, "Splash group");
                 Require(TeamInfo.Members.Count == 5, "Five team members");
                 for (int index = 1; index <= 5; index++)
-                    Require(splash.Controls.Find("picMember" + index, true).Length == 1,
-                        "Member photo card " + index);
+                {
+                    var photo = splash.Controls.Find("picMember" + index, true).SingleOrDefault() as PictureBox;
+                    var caption = splash.Controls.Find("lblMember" + index, true).SingleOrDefault() as Label;
+                    Require(photo?.Image is { Width: > 0, Height: > 0 },
+                        "Member portrait " + index + " must load");
+                    Require(caption != null &&
+                        caption.Text.StartsWith(TeamInfo.Members[index - 1].Name, StringComparison.Ordinal),
+                        "Member name must match portrait " + index);
+                }
                 CaptureIfPossible(splash, "splash.png");
             }
 
